@@ -39,3 +39,7 @@ class DataHandler:
 
             return smiles_list, features
     
+    def get_total_chunks(self, file_path, chunksize):
+        total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
+        total_chunks = (total_lines + chunksize - 1) // chunksize
+        return total_chunks
