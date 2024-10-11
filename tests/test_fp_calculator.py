@@ -25,7 +25,8 @@ class TestFingerprintCalculator(unittest.TestCase):
             [1, 0, 1, 0],
             [0, 1, 0, 1],
             [1, 1, 0, 0],
-            [0, 0, 1, 1]
+            [0, 0, 1, 1], 
+            [0, 1, 1, 0]
         ]
 
         result = self.calculator.calculate_fingerprints(self.sample_smiles)
