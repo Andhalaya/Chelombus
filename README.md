@@ -15,6 +15,7 @@ Requirements:
 
 ### Structure
 
+```bash
 molecule-pca-visualization/
 ├── data/
 │   └── sample_dataset.csv         # Place your datasets here
@@ -41,3 +42,4 @@ molecule-pca-visualization/
 ├── README.md                      # Project description and instructions
 ├── .gitignore                     # Files and folders to ignore in Git
 └── LICENSE                        # License information
+```
