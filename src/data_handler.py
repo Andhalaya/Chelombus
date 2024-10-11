@@ -1,14 +1,19 @@
-from config import DATA_FILE_PATH, SMILES_COLUMN_NAME
+from config import DATA_FILE_PATH, SMILES_COLUMN_NAME, CHUNKSIZE
+import pandas as pd
 
 class DataHanlder():
 
     def __init__(self):
         self.data = None
         self.smiles_column = SMILES_COLUMN_NAME
+        self.chunksize = CHUNKSIZE
         
 
     def load_data(self, file_path=DATA_FILE_PATH): # read data and detect file format automatically
         pass
+
+    def load_data_in_chunks(self, file_path, chunksize): 
+        return pd.read_csv(file_path, chunksize= chunksize)
 
     def extract_smiles(): # accept chunk as an argument
         pass 

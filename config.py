@@ -18,6 +18,12 @@ DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', 'sample_dataset.csv')
 OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data', 'processed_data.csv')
 
 # =======================
+# Loading parameters
+# =======================
+CHUNKSIZE = 512
+
+
+# =======================
 # PCA Parameters
 # =======================
 

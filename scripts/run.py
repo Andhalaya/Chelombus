@@ -15,7 +15,7 @@ def main():
     output_gen = OutputGenerator()
 
     # Load in chunks
-    data_chunks = data_handler.load_data_in_chunks(DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE)
+    data_chunks = data_handler.load_data_in_chunks(DATA_FILE_PATH, CHUNKSIZE)
     num_chunks = 0
 
     # Process chunks
