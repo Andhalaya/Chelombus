@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.data_handler import DataHandler
 import pickle
 from src.data_handler import DataHandler
 from src.fingerprint_calculator import FingerprintCalculator
@@ -15,23 +18,23 @@ def main():
     output_gen = OutputGenerator()
 
     # Load in chunks
-    data_chunks = data_handler.load_data_in_chunks(DATA_FILE_PATH, CHUNKSIZE)
+    data_chunks = data_handler.load_data(DATA_FILE_PATH, CHUNKSIZE)
     num_chunks = 0
 
     # Process chunks
-    for idx, chunk in enumerate(data_chunks): 
+    for idx, chunk in enumerate(data_chunks):
         num_chunks += 1
+
         # Check if chunk already exists
         if os.path.exists(f'data/fingerprints_chunk_{idx}.pkl'):
             print(f'Chunk {idx} already processed. Skipping.')
 
-        else: 
+        else:
             print(f'Processing chunk {idx}')
-            smiles_list = data_handler.extract_smiles(chunk)
-            features = data_handler.extract_features(chunk)
+            smiles_list, features = data_handler.extract_smiles_and_features(chunk)
 
-            fingerprints = fp_calculator.calculate_fp(smiles_list)
-            
+            fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
+
             # Save fingerprints
             with open(f'data/fingerprints_chunk_{idx}.pkl', 'wb') as f:
                 pickle.dump((fingerprints, smiles_list, features), f)

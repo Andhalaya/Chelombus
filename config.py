@@ -50,8 +50,6 @@ LOG_FILE_PATH = os.path.join(BASE_DIR, 'logs', 'app.log')
 # Other Configurations
 # =======================
 
-# SMILES column name (if different datasets have different column names)
-SMILES_COLUMN_NAME = 'smiles'  # Modify if your dataset uses a different name
 
 # Number of CPU cores to use for parallel processing
 N_JOBS = os.cpu_count()  # Uses all available cores
