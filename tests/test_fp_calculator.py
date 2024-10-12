@@ -57,7 +57,7 @@ class TestFingerprintCalculator(unittest.TestCase):
         smiles_list = []
         fingerprints = self.calculator.calculate_fingerprints(smiles_list)
         self.assertEqual(len(fingerprints), 0)
-        self.assertEqual(fingerprints, [])
+        self.assertEqual(fingerprints.tolist(), [])
 
     def test_single_smiles(self):
         """Test fingerprint calculation for a single SMILES string."""
