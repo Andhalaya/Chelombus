@@ -1,5 +1,10 @@
-from config import DATA_FILE_PATH, CHUNKSIZE
+from config import DATA_FILE_PATH
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.decomposition import IncrementalPCA
+import numpy as np
 
 class DataHandler:
     def load_data(self, file_path=None, chunksize=None):
@@ -37,9 +42,26 @@ class DataHandler:
             smiles_list = data[smiles_column]
             features = data.drop(columns=[smiles_column])
 
-            return smiles_list, features
+            return np.array(smiles_list), np.array(features)
     
     def get_total_chunks(self, file_path, chunksize):
         total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
         total_chunks = (total_lines + chunksize - 1) // chunksize
         return total_chunks
+    
+
+    def one_hot_encode(self, features): 
+        one_hot_encoder = ColumnTransformer(
+            transformers=[
+                ('cat', OneHotEncoder(), features)
+            ], 
+            remainder= 'passthrough' # Keep the rest of columns as is
+        )
+
+        oh_features = one_hot_encoder.fit_transform(features)
+        return oh_features
+    
+    def standarize_data(self, data): 
+        scaler = StandardScaler()
+        data_standardized = scaler.fit_transform(data)
+
