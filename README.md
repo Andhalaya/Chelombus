@@ -91,6 +91,7 @@ Optionally, transform and save the reduced data
 
 ## TO DO
 - Add arguments parser to num_dimensions to reduce to 
-- Add support for txt and other file types
+- Add support for txt and other file typess
 - Think of better output type than pd.DataFrame: options Parquet, HDF5, 
 - Mkdir output in output_generator.py
+- Add directory to save log output s

@@ -36,7 +36,7 @@ def main():
         num_chunks += 1
 
         # Check if chunk already exists
-        if os.path.exists(f'data/fingerprints_chunk_{idx}.pkl'):
+        if os.path.exists(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl'):
             continue
 
         # Load smiles and features
@@ -63,7 +63,7 @@ def main():
     # Partial fit using iPCA
     ipca = IncrementalPCA(n_components = 3) # Dimensions to reduce to
     for idx in tqdm(range(num_chunks), desc="Loading Fingerprints and fitting "):
-        with open(f'data/fingerprints_chunk_{idx}.pkl', 'rb') as f:
+        with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
             fingerprints = pickle.load(f)
 
         ipca.partial_fit(fingerprints)
@@ -74,12 +74,12 @@ def main():
 
     for idx in tqdm(range(total_chunks), desc='Transforming Data'):
         # Load fingerprint
-        with open(f'data/fingerprints_chunk_{idx}.pkl', 'rb') as f:
+        with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
             fingerprints = pickle.load(f)
 
         coordinates = ipca.fit_transform(fingerprints)
 
-        with open(f'data/smiles_features_chunk_{idx}.pkl', 'rb') as f:
+        with open(f'data/features_chunks/smiles_features_chunk_{idx}.pkl', 'rb') as f:
             smiles_list, features = pickle.load(f)
         
         output_gen.save_batch(idx, coordinates, smiles_list, features)
