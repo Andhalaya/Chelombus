@@ -12,10 +12,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', 'cleaned_dataset.csv')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '10M_ZINC_id_Sim_mqn.csv')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data', 'processed_data.csv')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data')
 
 # =======================
 # Loading parameters
