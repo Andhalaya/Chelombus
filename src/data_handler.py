@@ -5,6 +5,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import IncrementalPCA
 import numpy as np
+import time
 
 class DataHandler:
     def load_data(self, file_path=None, chunksize=None):
@@ -21,10 +22,11 @@ class DataHandler:
             except Exception as e:
                 raise ValueError(f"Error reading file: {e}")
 
-        # TODO: Add support for txt  
+            # TODO: Add support for txt  
         # elif file_path.split('.')[-1] == 'txt':
         #     return False 
         
+        # TODO: Add support for CSXSmiles which likely be 
         else: 
             raise ValueError('Unsupported input file. Only .csv files are supported')
     
@@ -48,7 +50,7 @@ class DataHandler:
         total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
         total_chunks = (total_lines + chunksize - 1) // chunksize
         return total_chunks
-    
+
 
     def one_hot_encode(self, features): 
         one_hot_encoder = ColumnTransformer(

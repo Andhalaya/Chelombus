@@ -2,6 +2,7 @@ from multiprocessing import Pool
 from config import N_JOBS
 from rdkit import Chem
 from mhfp.encoder import MHFPEncoder
+from rdkit.Chem import rdMolDescriptors                                                           
 import numpy as np
 
 def init_worker(): 
@@ -15,7 +16,7 @@ def _calculate_fingerprint(smiles):
         # mol = Chem.MolFromSMiles(smiles)
         # if mol is None: 
         #     raise ValueError(f"Invalid SMILES string: {smiles}")
-        fingerprint = encoder.encode(smiles)
+        fingerprint = rdMolDescriptors.MQNs_(Chem.MolFromSmiles(smiles))
         return np.array(fingerprint)
     
     except Exception as e: 
