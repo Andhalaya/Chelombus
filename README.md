@@ -87,3 +87,10 @@ For each chunk:
 Standardize using the approximate scaler.
 Partial fit the IncrementalPCA.
 Optionally, transform and save the reduced data
+
+
+## TO DO
+- Add arguments parser to num_dimensions to reduce to 
+- Add support for txt and other file types
+- Think of better output type than pd.DataFrame: options Parquet, HDF5, 
+- Mkdir output in output_generator.py
