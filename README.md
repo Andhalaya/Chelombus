@@ -44,36 +44,15 @@ molecule-pca-visualization/
 └── LICENSE                        # License information
 ```
 
+### Chunk Size test
 
-### PCA 
+![Chunk-test](image.png)
 
-Initializing StandardScaler and IncrementalPCA:
+Test of most optimal chunk size for 10M datapoints. For initial test with 10M datapoints we will set chunk_size = 6050
 
-StandardScaler() is initialized without parameters, as with_mean and with_std are True by default.
-IncrementalPCA(n_components=n_components) is initialized with the desired number of components.
-Step 1: Fitting the Scaler:
+First test with chunk_size = 650 was 1 hour. 
+Now 10M compounds run under 8 minutes
 
-scaler.partial_fit(fingerprints_array) is called for each chunk to update the running mean and variance.
-This step effectively computes the global mean and standard deviation across all chunks.
-Step 2: Fitting Incremental PCA:
-
-After the scaler has been fitted to the entire dataset, we standardize each chunk using scaler.transform(fingerprints_array).
-We then reducer.partial_fit(fingerprints_std) to incrementally fit the PCA model on the standardized data.
-Step 3: Transforming and Saving Data:
-
-We standardize and transform each chunk using the fitted scaler and PCA model.
-The reduced data is then saved to disk using pickle.
-Important Considerations
-Order of Operations: It's crucial to first fit the scaler to the entire dataset (or an approximation using chunks) before standardizing and fitting PCA. This ensures that the standardization parameters are consistent across all data.
-
-Multiple Passes Over Data:
-
-First Pass: Fit the StandardScaler to compute the mean and variance.
-Second Pass: Fit the IncrementalPCA using the standardized data.
-Third Pass: Transform the data using the fitted PCA model and save the results.
-Unfortunately, this requires multiple passes over the data. If reading the data multiple times is not feasible, you might need to consider approximations or advanced techniques.
-
-Memory Management: Even though we are processing data in chunks, ensure that each chunk is small enough to fit in memory, considering the overhead of additional data structures.
 
 #### Alternative Approach: Combining Standardization and PCA in One Pass
 If making multiple passes over the data is impractical, also we can consider the following approach:
