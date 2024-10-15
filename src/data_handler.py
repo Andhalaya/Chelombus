@@ -19,31 +19,46 @@ class DataHandler:
     def __init__(self, file_path, chunksize):
         self.file_path = file_path
         self.chunksize = chunksize
+        self.datatype = find_input_type(file_path)
 
-    def load_data(self):      
-        if find_input_type(self.file_path) == 'csv':       
-            try:
-                total_chunks = get_total_chunks(self.file_path, self.chunksize)
-                
-                return pd.read_csv(self.file_path, chunksize=self.chunksize), total_chunks
-            
-            except Exception as e:
-                raise ValueError(f"Error reading file: {e}")
 
-        elif find_input_type(self.file_path) == '.txt':
-            # TODO: Add support for txt  
-            pass 
+    def load_data(self):
+        # Dynamically dispatch the right method based on datatype
+        if self.datatype == 'csv':
+            return self._load_csv_data()
+        elif self.datatype == 'txt':
+            return self._load_txt_data()
+        elif self.datatype == 'cxsmiles':
+            return self._load_cxsmiles()
+        else:
+            raise ValueError(f"Unsupported file type: {self.datatype}")
+
+    def _load_csv_data(self):
+        try:
+            total_chunks = get_total_chunks(self.file_path, self.chunksize)
+            return pd.read_csv(self.file_path, chunksize=self.chunksize), total_chunks
+
+        except Exception as e:
+            raise ValueError(f"Error reading file: {e}")
         
-        elif self.file_path.split('.')[-1] == '.cxsmiles':
-            try:
-                with open(self.file_path,'r') as f:
-                    pass
-            except Exception as e:
-                raise ValueError(f"Error reading file: {e}")
+    def _load_txt_data(self):
+        #TODO return data from txt file
+        try:
+            total_chunks = get_total_chunks(self.file_path, self.chunksize)
+            return total_chunks
 
-        else: 
-            raise ValueError('Unsupported input file. Only .csv, .txt. and .CXSSmiles files are supported')
-    
+        except Exception as e:
+            raise ValueError(f"Error reading file: {e}")
+        
+    def _load_cxsmiles_data(self):
+
+        try:
+            total_chunks = get_total_chunks(self.file_path, self.chunksize)
+            return pd.read_csv(self.file_path, chunksize=self.chunksize), total_chunks
+
+        except Exception as e:
+            raise ValueError(f"Error reading file: {e}")
+        
     
     def extract_smiles_and_features(self, data):
             """ 
@@ -64,12 +79,9 @@ class DataHandler:
 
             return np.array(smiles_list), np.array(features)
     
-
-
-
     def one_hot_encode(self, features): 
         """ 
-        TODO Idea is to one hot encode categorical features e.g. 'target value'
+        #TODO Idea is to one hot encode categorical features e.g. 'target value'
         and use it in PCA 
         """
         one_hot_encoder = ColumnTransformer(

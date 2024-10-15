@@ -50,33 +50,33 @@ def main():
     print(f"All fingerprints were calculated in: {(end-start)/60} minutes")
 
 
-     # Load all fingerprints with tqdm progress bar
-     # Partial fit using iPCA
-    ipca = IncrementalPCA(n_components = 3) # Dimensions to reduce to
-    for idx in tqdm(range(num_chunks), desc="Loading Fingerprints and fitting "):
-        with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
-            fingerprints = pickle.load(f)
+    #  # Load all fingerprints with tqdm progress bar
+    #  # Partial fit using iPCA
+    # ipca = IncrementalPCA(n_components = 3) # Dimensions to reduce to
+    # for idx in tqdm(range(num_chunks), desc="Loading Fingerprints and fitting "):
+    #     with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
+    #         fingerprints = pickle.load(f)
 
-        ipca.partial_fit(fingerprints)
-        del fingerprints
+    #     ipca.partial_fit(fingerprints)
+    #     del fingerprints
 
-    # Transform Data and Save results
-    print("Performing Dimensionality Reduction...")
+    # # Transform Data and Save results
+    # print("Performing Dimensionality Reduction...")
 
-    for idx in tqdm(range(total_chunks), desc='Transforming Data'):
-        # Load fingerprint
-        with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
-            fingerprints = pickle.load(f)
+    # for idx in tqdm(range(total_chunks), desc='Transforming Data'):
+    #     # Load fingerprint
+    #     with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
+    #         fingerprints = pickle.load(f)
 
-        coordinates = ipca.fit_transform(fingerprints)
+    #     coordinates = ipca.fit_transform(fingerprints)
 
-        with open(f'data/features_chunks/smiles_features_chunk_{idx}.pkl', 'rb') as f:
-            smiles_list, features = pickle.load(f)
+    #     with open(f'data/features_chunks/smiles_features_chunk_{idx}.pkl', 'rb') as f:
+    #         smiles_list, features = pickle.load(f)
 
-        output_gen.save_batch(idx, coordinates, smiles_list, features)
+    #     output_gen.save_batch(idx, coordinates, smiles_list, features)
 
-        # Clean
-        del fingerprints, coordinates, smiles_list, features
+    #     # Clean
+    #     del fingerprints, coordinates, smiles_list, features
     
 if __name__ == '__main__':
     start = time.time()
