@@ -10,15 +10,8 @@ def setup_logging():
 
 
 
-def find_input_type(self, file_path):
-    if file_path.endswith('csv'):
-        return True
-    # TODO: Add support for txt  
-    # elif file_path.split('.')[-1] == 'txt':
-    #     return False 
-    else: 
-        raise ValueError('Unsupported input file. Only .csv files are supported')
-    
+def find_input_type(file_path):
+    return file_path.split('.')[-1]
 
 def validate_data():
     pass

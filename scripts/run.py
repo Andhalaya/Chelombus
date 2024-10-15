@@ -3,32 +3,23 @@ import time
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pickle
-from config import DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE, N_JOBS
-from tqdm import tqdm  # Import tqdm
+from config import DATA_FILE_PATH, CHUNKSIZE
+from tqdm import tqdm 
 from sklearn.decomposition import IncrementalPCA
 
-from src.data_handler import DataHandler
+from src.data_handler import DataHandler, get_total_chunks
 from src.fingerprint_calculator import FingerprintCalculator
-from src.dimensionality_reducer import DimensionalityReducer
 from src.output_generator import OutputGenerator
 
 def main():
     # Initialize classes
-    data_handler = DataHandler()
-    fp_calculator = FingerprintCalculator()
-    # reducer = DimensionalityReducer()
+    data_handler = DataHandler(DATA_FILE_PATH, CHUNKSIZE)
     output_gen = OutputGenerator()
-
-    # Calculate total number of chunks (optional, for tqdm)
-    start = time.time() 
-    total_chunks = data_handler.get_total_chunks(DATA_FILE_PATH, CHUNKSIZE)
-    end = time.time()
-
-    print(f"total chunks calculated in: {end-start} seconds")
+    fp_calculator = FingerprintCalculator()
 
     # Load data in chunks
     start = time.time()
-    data_chunks = data_handler.load_data(DATA_FILE_PATH, CHUNKSIZE)
+    data_chunks, total_chunks = data_handler.load_data()
 
     # Process chunks with tqdm progress bar
     num_chunks = 0
@@ -56,11 +47,11 @@ def main():
         del smiles_list, features, fingerprints # Free space
 
     end = time.time()
-    print(f"All fingerprints calculated in: {end-start} seconds")
+    print(f"All fingerprints were calculated in: {(end-start)/60} minutes")
 
 
-    # Load all fingerprints with tqdm progress bar
-    # Partial fit using iPCA
+     # Load all fingerprints with tqdm progress bar
+     # Partial fit using iPCA
     ipca = IncrementalPCA(n_components = 3) # Dimensions to reduce to
     for idx in tqdm(range(num_chunks), desc="Loading Fingerprints and fitting "):
         with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
@@ -81,7 +72,7 @@ def main():
 
         with open(f'data/features_chunks/smiles_features_chunk_{idx}.pkl', 'rb') as f:
             smiles_list, features = pickle.load(f)
-        
+
         output_gen.save_batch(idx, coordinates, smiles_list, features)
 
         # Clean
