@@ -49,7 +49,7 @@ molecule-pca-visualization/
 
 ### Chunk Size test
 
-![Chunk-test](image.png)
+![Chunk-test](images/image.png)
 
 Test of most optimal chunk size for 10M datapoints. For initial test with 10M datapoints we will set chunk_size = 6050
 
@@ -87,7 +87,18 @@ However for very large datasets ~6 Billion this will probably not work as we can
 ---
 ### Simple Approach
 
-![Data for 10M compounds](image-1.png)
+1. Calculate 0.01 and 99.99 percentiles 
+2. Take range on each axis that contains all points between percentiles
+2. Create grid by dividing each range on the axis in 100 steps (*pixels*). 
+3. Approximate each 3D coordinate from PCA to nearest pixel. 
+
+
+
+This is probably the eassiest solution, but again not very efficient for 10B compounds as it will need to calculate the percentiles. 
+
+
+#### Visualization
+![Data for 10M compounds](images/image-1.png)
 *Data for 10M compounds* 
 
 The histograms show that the data along each principal component $(x, y, z)$ is somewhat bell-shaped but with significant skewness and heavy tails, especially in the $x$ and $y$ components.
@@ -113,17 +124,12 @@ y = $[-16.20908626, 23.04514974]$
 
 z = $[-10.74670722, 12.98772289]$
 
-and we want to map this range into 100 steps, the step size is:
- Yes, using the **0.01 to 99.99 percentiles** as the range for each coordinate (x, y, and z) is a good strategy. This allows you to handle the majority of your data while excluding extreme outliers, which can skew the results if included. This method is more robust than relying on the full min-max range, as it focuses on the main body of the distribution, which is often more relevant.
+and we want to map this range into 100 steps.
 
-### Why Use Percentiles Instead of Min/Max?
-
-1. **Avoiding Outliers**: By using the 0.01 and 99.99 percentiles, you’re effectively ignoring extreme outliers that could be disproportionately affecting your normalization. This is important because outliers can stretch the min-max range, making it less representative of the bulk of the data.
-2. **Better Representation of the Data**: The percentile range represents where most of the data points are located, which is the region you're most interested in mapping.
 
 ### Mapping Strategy
 
-You can now use these percentile-based ranges for each of the coordinates and apply the same logic as before. Here’s how you can adjust the step size for each coordinate based on its percentile range.
+Now we use these percentile-based ranges for each of the coordinates and apply the same logic as before.
 
 #### Step Sizes for Each Coordinate
 
@@ -144,7 +150,7 @@ You can now use these percentile-based ranges for each of the coordinates and ap
 
 ### Mapping Formula
 
-For each coordinate, you will map the values to a range of 100 steps using the following formula:
+For each coordinate, we map the values to a range of 100 steps using the following formula:
 
 $$
 \text{Mapped X} = \left\lfloor \frac{x_i - \text{percentile}_\text{0.01}}{\text{step size}_x} \right\rfloor
@@ -156,33 +162,16 @@ $$
 \text{Mapped Z} = \left\lfloor \frac{z_i - \text{percentile}_\text{0.01}}{\text{step size}_z} \right\rfloor
 $$
 
-Where each mapped value is clamped to the range $[0, 99]$ to ensure it fits within the 100x100x100 cube.
 
 
-2. **Mapping Each Point to the Grid**:
+**Handling Points Outside the Range**:
+Since some points in the data may fall outside the range we've to decide how to handle those. We could either: 
 
-For each data point $x_i$ (where $x_i$ lies within the range $[-20, 20]$), we can map it to one of the 100 steps by normalizing it. 
-
-
-$$
-   \text{Mapped X} = \left\lfloor \frac{x_i + 20}{0.4} \right\rfloor
-$$
-
-for $y_i$ same thing will apply: 
-
-$$
-   \text{Mapped Y} = \left\lfloor \frac{y_i + 20}{0.4} \right\rfloor
-$$
-
-
-3. **Handling Points Outside the Range**:
-Since some points in the data may fall outside the range we've to decide how to handle those. We could either:
-     - **Clamp the values**: Any value below $percentile_{0.01}$ is mapped to $percentile_{0.01}$, and any value above $percentile_{99.99}$ is mapped to $percentile_{99.99}$.
-     - **Ignore the outliers**: Discard any points outside the range, focusing only on the central bulk of the data.
+  - **Clamp the values**: Any value below $percentile_{0.01}$ is mapped to $percentile_{0.01}$, and any value above $percentile_{99.99}$ is mapped to $percentile_{99.99}$.
+  
+  - **Ignore the outliers**: Discard any points outside the range, focusing only on the central bulk of the data.
 
 ### Output
-
-
 
 Top 50 pixels with the most molecules
 pixel_43_39_49: 786 SMILES
@@ -191,13 +180,15 @@ pixel_43_38_55: 566 SMILES
 
 Also around ~70,000 molecules are not grouped together i.e. 1 molecule = 1 pixel 
 
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 1M pixels, color coding according to number of compounds clustered in each pixel
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 Binned pixels. 
-Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. 
+Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. This is equivalent to having built a 10x10x10 cube instead of 100x100x100. 
+
+
 
 
 ## TO DO
@@ -205,4 +196,6 @@ Groups the pixel values into larger bins by rounding down to the nearest multipl
 - Add support for txt and other file typess
 - Think of better output type than pd.DataFrame: options Parquet, HDF5, 
 - Mkdir output in output_generator.py
-- Add directory to save log output s
+- Add directory to save log outputs
+- Add argparser to set the dimensions of the cube? e.g. -dim 10 -> 10x10x10 -dim 100 -> 100x100x100
+
