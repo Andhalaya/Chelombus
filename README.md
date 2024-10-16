@@ -191,8 +191,13 @@ pixel_43_38_55: 566 SMILES
 
 Also around ~70,000 molecules are not grouped together i.e. 1 molecule = 1 pixel 
 
+![alt text](image-4.png)
 
+1M pixels, color coding according to number of compounds clustered in each pixel
 
+![alt text](image-3.png)
+Binned pixels. 
+Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. 
 
 
 ## TO DO
