@@ -1,15 +1,15 @@
 # Chelombus
 
-## Project Overview
-Objective: Process a molecular dataset to compute fingerprints, reduce dimensionality using PCA, and output 3D coordinates along with SMILES strings and any available features.
+Chelombus aims to become a tool to explore very large Databases (up to Billions) and create a new approach to visualazing these spaces.
+
 
 Requirements:
 
-    Adaptable to datasets with varying features or just SMILES.
+    Adaptable to datasets with varying features or just SMILES. So far suppport for txt, csv and cxsmiles filetypes. 
     Output should include:
         3D coordinates for each molecule.
         Original SMILES strings.
-        Available features from the dataset
+        Available features from the dataset e.g. molecular properties such as heavy atom count or log p
 
 
 
@@ -19,6 +19,7 @@ Requirements:
 molecule-pca-visualization/
 ├── data/
 │   └── sample_dataset.csv         # Place your datasets here
+│   └── output/                    # csv files with header: smiles,x,y,z,*features
 ├── src/
 │   ├── __init__.py
 │   ├── data_handler.py            # Contains DataHandler class
@@ -51,26 +52,12 @@ molecule-pca-visualization/
 Test of most optimal chunk size for 10M datapoints. For initial test with 10M datapoints we will set chunk_size = 6050
 
 First test with chunk_size = 650 was 1 hour. 
-Now 10M compounds run under 8 minutes
-
-
-#### Alternative Approach: Combining Standardization and PCA in One Pass
-If making multiple passes over the data is impractical, also we can consider the following approach:
-
-Estimate Scaling Parameters with a Subset:
-    Use a representative subset of your data to compute approximate mean and standard deviation.
-    Fit the StandardScaler on this subset.
-    Proceed with Single-Pass Processing:
-
-For each chunk:
-Standardize using the approximate scaler.
-Partial fit the IncrementalPCA.
-Optionally, transform and save the reduced data
+Now 10M compounds can run under 7 minutes (CPU: AMD 7 8700F 8-Core Processor) 
 
 
 ## TO DO
-- Add arguments parser to num_dimensions to reduce to 
+- Add argpaser to num_dimensions to reduce to, -o ouput_name.filetype, 
 - Add support for txt and other file typess
 - Think of better output type than pd.DataFrame: options Parquet, HDF5, 
 - Mkdir output in output_generator.py
-- Add directory to save log output s
+- Add directory to save log outputs
