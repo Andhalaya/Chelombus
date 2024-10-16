@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '10M_ZINC_id_Sim_mqn.csv')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', 'Enamine_REAL_HAC_29_38_1.3B_Part_2_CXSMILES.cxsmiles')
 
 # Output data file path
 OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data')
@@ -20,7 +20,7 @@ OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data')
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 6050
+CHUNKSIZE = 36050
 
 
 # =======================

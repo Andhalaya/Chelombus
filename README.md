@@ -185,8 +185,9 @@ Also around ~70,000 molecules are not grouped together i.e. 1 molecule = 1 pixel
 1M pixels, color coding according to number of compounds clustered in each pixel
 
 ![alt text](images/image-3.png)
-Binned pixels. 
-Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. This is equivalent to having built a 10x10x10 cube instead of 100x100x100. 
+
+
+Binned pixels. Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. This is equivalent to having built a 10x10x10 cube instead of 100x100x100. 
 
 
 

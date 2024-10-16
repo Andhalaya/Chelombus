@@ -10,6 +10,7 @@ from sklearn.decomposition import IncrementalPCA
 from src.data_handler import DataHandler, get_total_chunks
 from src.fingerprint_calculator import FingerprintCalculator
 from src.output_generator import OutputGenerator
+import numpy as np 
 
 def main():
     # Initialize classes
@@ -23,20 +24,18 @@ def main():
 
     # Process chunks with tqdm progress bar
     num_chunks = 0
-    for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Processing Chunks")):
+    for idx, chunk in enumerate(tqdm(data_chunks, total=18295, desc="Processing Chunks")):
         num_chunks += 1
-
         # Check if chunk already exists
-        if os.path.exists(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl'):
+        if os.path.exists(f'data/fingerprints_chunk_{idx}.pkl'):
             continue
-
-        # Load smiles and features
+        
         smiles_list, features = data_handler.extract_smiles_and_features(chunk)
-
+    
         # Calculate fingerprints with progress bar
         fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
 
-        # Save fingerprints
+        # Save  fingerprints
         with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'wb') as f:
             pickle.dump((fingerprints), f)
 
