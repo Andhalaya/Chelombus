@@ -19,15 +19,6 @@ def main():
     output_gen = OutputGenerator()
     fp_calculator = FingerprintCalculator()
 
-    # # TODO: Dynamic method for calculating the percentiles for every PCA dimension 
-    # digests = {}
-    # for i in range(5):
-    #     digests[f'{i}_digest'] = TDigest()
-
-    x_digest = TDigest()
-    y_digest = TDigest()
-    z_digest = TDigest()
-    
     # Load data in chunks
     data_chunks, total_chunks = data_handler.load_data()
 
@@ -74,6 +65,7 @@ def main():
 
     # Transform Data and Save results
     print("Performing Dimensionality Reduction...")
+
     for idx in tqdm(range(total_chunks), desc='Transforming Data'):
         # Load fingerprint
         with open(f'data/1M/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
@@ -81,21 +73,23 @@ def main():
 
         coordinates = ipca.transform(fingerprints)
 
-        x_digest.batch_update(coordinates[:,0])
-        y_digest.batch_update(coordinates[:,1])
-        z_digest.batch_update(coordinates[:,2])
-
         with open(f'data/1M/features_chunks/smiles_features_chunk_{idx}.pkl', 'rb') as f:
             smiles_list, features = pickle.load(f)
 
+
+        # Calculate the percentiles
+        percentiles =  output_gen.get_percentiles(coordinates) # List of tuples of len(number_pca_dimensions): ((percentile_0.01, percentile_99.99))
+
+        print('Percentiles: ', percentiles)
+
+        # Mapp PCA coordinates to the 100x100x100 dimensional cube
+        mapped_coordinates = output_gen.map_to_grid(coordinates, percentiles)
+
+        # Output 
         output_gen.save_batch(idx, coordinates, smiles_list, features)
 
         # Clean
         del fingerprints, coordinates, smiles_list, features
-    
-    print(f'X: {x_digest.percentile(0.01), x_digest.percentile(99.99)}')
-    print(f'Y: {y_digest.percentile(0.01), x_digest.percentile(99.99)}')
-    print(f'Z: {z_digest.percentile(0.01), x_digest.percentile(99.99)}')
 
 if __name__ == '__main__':
     start = time.time()
