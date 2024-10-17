@@ -7,14 +7,15 @@ from src.utils.helper_functions import find_input_type
 import numpy as np
 import time
 import tqdm
-
+ 
 def get_total_chunks(file_path, chunksize):
     """ Calculate number of chunks based on self.chunksize. For tqdm 
     avoid for files that are too large >150 GB? Takes about ~2 minutes for such size
     Also can manually 
     """
-    total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
-    total_chunks = (total_lines + chunksize - 1) // chunksize
+    # total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
+    total_lines = int(664075400)
+    total_chunks = (int(total_lines) + int(chunksize) - 1) // int(chunksize)
     return total_chunks
     
 class DataHandler:
@@ -29,11 +30,7 @@ class DataHandler:
             return sum(1 for _ in f)
 
     def load_data(self):
-        # start = time.time()
-        # print('Calculating total lines')
-        # total_chunks = get_total_chunks(self.file_path, self.chunksize)
-        # end = time.time()
-        total_chunks = round(109765/6) # for 6B chunksize 
+        total_chunks = get_total_chunks(self.file_path, self.chunksize)
 
         # Dynamically dispatch the right method based on datatype
         if self.datatype == 'csv':
@@ -60,7 +57,6 @@ class DataHandler:
             raise ValueError(f"Error reading file: {e}")
             
     def _load_cxsmiles_data(self):  # Generator object, to be used in enumerate
-        total_chunks = round(109765 / 6)
         try:
             with open(self.file_path, 'r', encoding='utf-8') as f:
                 # Skip the header line
@@ -114,10 +110,10 @@ class DataHandler:
                 """
                  This part assumes that the 'smiles' columns in the txt or cxsmile files is in first position
                 """
-                # TODO: OPTIMIZE, THIS IS VERY INNEFICIENT WAY BUT IT'S THE ONLY ONE I COULD THINK OF
-                smiles= [item[0] for item in data]
-                features = [item[1:] for item in data]
-                return smiles, features
+                smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
+                features = np.array(data)[:,1:]
+
+                return smiles_list, features
  
             
             return np.array(smiles_list), np.array(features)

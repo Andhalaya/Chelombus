@@ -14,24 +14,27 @@ import numpy as np
 
 def main():
     # Initialize classes
-    data_handler = DataHandler(DATA_FILE_PATH, CHUNKSIZE)
+    data_handler = DataHandler(DATA_FILE_PATH, 36050)
     output_gen = OutputGenerator()
     fp_calculator = FingerprintCalculator()
 
     # Load data in chunks
-    start = time.time()
+
     data_chunks, total_chunks = data_handler.load_data()
 
     # Process chunks with tqdm progress bar
     num_chunks = 0
-    for idx, chunk in enumerate(tqdm(data_chunks, total=18295, desc="Processing Chunks")):
+    for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Processing Chunks")):
+        start = time.time()
         num_chunks += 1
+
         # Check if chunk already exists
         if os.path.exists(f'data/fingerprints_chunk_{idx}.pkl'):
             continue
         
+        # Extract smiles and features from chunk
         smiles_list, features = data_handler.extract_smiles_and_features(chunk)
-    
+
         # Calculate fingerprints with progress bar
         fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
 
@@ -45,7 +48,8 @@ def main():
 
         del smiles_list, features, fingerprints # Free space
 
-    end = time.time()
+        end = time.time()
+        print(f'time to calculate 1 chunk of {CHUNKSIZE}: {end-start} seconds')
     print(f"All fingerprints were calculated in: {(end-start)/60} minutes")
 
 

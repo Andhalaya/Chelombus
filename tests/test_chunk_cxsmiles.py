@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pickle
 from config import DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE, N_JOBS
 from tqdm import tqdm  # Import tqdm
-from src.data_handler import DataHandler
+from src.data_handler import DataHandler, get_total_chunks
 from src.fingerprint_calculator import FingerprintCalculator
 from src.output_generator import OutputGenerator
 import time
@@ -19,14 +19,15 @@ from tqdm import tqdm
 
 # Define the list of chunksizes to test
 
-CHUNKSIZES_TO_TEST = range(25000, 55000, 1000)
+CHUNKSIZES_TO_TEST = range(80000, 255000, 5000)
 
 # Initialize classes
 output_gen = OutputGenerator()
 fp_calculator = FingerprintCalculator()
 
-def run_chunks_with_chunksize(chunksize, num_chunks_to_run=3):
-    data_handler = DataHandler(DATA_FILE_PATH, chunksize)
+
+def run_chunks_with_chunksize(chunksize, data_handler, num_chunks_to_run=1):
+
     """
     Run a few chunks with a specific chunksize and return the average processing time.
     """
@@ -51,12 +52,10 @@ def run_chunks_with_chunksize(chunksize, num_chunks_to_run=3):
 
         end = time.time()
         processing_times.append(end - start)
-        # print(f'time to calculate 1 chunk of {chunksize}: {end-start} seconds')
 
     # Calculate the average processing time for the chunks
     avg_processing_time = sum(processing_times) / len(processing_times)
-    total_time = (total_chunks/chunksize) * avg_processing_time
-    print(total_time)
+    total_time = total_chunks * avg_processing_time
     return total_time
 
 def main():
@@ -64,15 +63,16 @@ def main():
 
     # Test each chunksize
     for chunksize in CHUNKSIZES_TO_TEST:
-        avg_time = run_chunks_with_chunksize(chunksize)
-        avg_times.append(avg_time)
-        print(f'Average time for chunksize {chunksize}: {avg_time} seconds')
+        data_handler = DataHandler(DATA_FILE_PATH, chunksize)
+        time_total = run_chunks_with_chunksize(chunksize, data_handler, num_chunks_to_run=3)
+        avg_times.append(time_total/3600)
+        print(f'Average time for chunksize {chunksize}: {time_total/3600} hours')
 
     # Plot the results
     plt.figure(figsize=(10, 6))
     plt.plot(CHUNKSIZES_TO_TEST, avg_times, marker='o')
     plt.xlabel('Chunk Size')
-    plt.ylabel('Average Time per Chunk (seconds)')
+    plt.ylabel('Average Time per Chunk (hours)')
     plt.title('Chunk Size vs Average Processing Time')
     plt.grid(True)
     plt.show()

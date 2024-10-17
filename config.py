@@ -20,7 +20,7 @@ OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data')
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 36050
+CHUNKSIZE = 32050
 
 
 # =======================
