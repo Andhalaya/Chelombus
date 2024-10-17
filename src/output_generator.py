@@ -17,4 +17,4 @@ class OutputGenerator():
          for i in range(len(coordinates[0])):
             batch_data[f'PCA_{i+1}'] = coordinates[:, i]
 
-         batch_data.to_csv(f'data/output/batch_data_{batch_idx}.csv', index=False)
+         batch_data.to_csv(f'data/1M/output/batch_data_{batch_idx}.csv', index=False)
