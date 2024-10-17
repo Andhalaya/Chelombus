@@ -47,8 +47,23 @@ molecule-pca-visualization/
 └── LICENSE                        # License information
 ```
 
+## Tests
+
+### compressed vs Uncompressed file
+
+Since the files from the Enamine DB are very large ~150GB each with around 650M compounds (lines) each, I tried running the code on the compressed file (15GB) to test the speed when working with bz2 compressed files. The test made very clear that the tradeoff of speed for working with smaller files is not worth it. 
+
+I will add an option to work with compressed files in case the resources of the machine is limited and slower speeds is not unconvinient. 
+
+```bash
+Time taken for compressed file (bz2): 64.01 seconds
+Time taken for uncompressed file: 3.78 seconds
+```
+
+
 ### Chunk Size test
 
+#### 10M 
 ![Chunk-test](images/image.png)
 
 Test of most optimal chunk size for 10M datapoints. For initial test with 10M datapoints we will set chunk_size = 6050
@@ -56,6 +71,12 @@ Test of most optimal chunk size for 10M datapoints. For initial test with 10M da
 First test with chunk_size = 650 was 1 hour. 
 Now 10M compounds run under 8 minutes
 
+#### 650M 
+
+Test of most optimal chunk size for 650M datapoints
+![Chunk-test](images/Figure_1.png)
+
+Most optimal chunksize for 650M datapoints: 110000
 
 ## Fitting to Cube
 
@@ -199,4 +220,5 @@ Binned pixels. Groups the pixel values into larger bins by rounding down to the 
 - Mkdir output in output_generator.py
 - Add directory to save log outputs
 - Add argparser to set the dimensions of the cube? e.g. -dim 10 -> 10x10x10 -dim 100 -> 100x100x100
+- Add option to work direclty with the compressed files.
 

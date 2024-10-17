@@ -3,7 +3,7 @@ import time
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pickle
-from config import DATA_FILE_PATH, CHUNKSIZE
+from config import DATA_FILE_PATH, CHUNKSIZE, PCA_N_COMPONENTS
 from tqdm import tqdm 
 from sklearn.decomposition import IncrementalPCA
 
@@ -19,17 +19,18 @@ def main():
     fp_calculator = FingerprintCalculator()
 
     # Load data in chunks
-
     data_chunks, total_chunks = data_handler.load_data()
 
     # Process chunks with tqdm progress bar
     num_chunks = 0
+
+    start = time.time()
+
     for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Processing Chunks")):
-        start = time.time()
         num_chunks += 1
 
         # Check if chunk already exists
-        if os.path.exists(f'data/fingerprints_chunk_{idx}.pkl'):
+        if os.path.exists(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl'):
             continue
         
         # Extract smiles and features from chunk
@@ -48,14 +49,13 @@ def main():
 
         del smiles_list, features, fingerprints # Free space
 
-        end = time.time()
-        print(f'time to calculate 1 chunk of {CHUNKSIZE}: {end-start} seconds')
-    print(f"All fingerprints were calculated in: {(end-start)/60} minutes")
+    end = time.time()
 
+    print(f"Preprocessing of data took: {end-start} seconds")
 
     # Load all fingerprints with tqdm progress bar
     # Partial fit using iPCA
-    ipca = IncrementalPCA(n_components = 3) # Dimensions to reduce to
+    ipca = IncrementalPCA(n_components = PCA_N_COMPONENTS) # Dimensions to reduce to
     for idx in tqdm(range(num_chunks), desc="Loading Fingerprints and fitting "):
         with open(f'data/fp_chunks/fingerprints_chunk_{idx}.pkl', 'rb') as f:
             fingerprints = pickle.load(f)

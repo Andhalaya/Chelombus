@@ -9,12 +9,13 @@ import time
 import tqdm
  
 def get_total_chunks(file_path, chunksize):
-    """ Calculate number of chunks based on self.chunksize. For tqdm 
-    avoid for files that are too large >150 GB? Takes about ~2 minutes for such size
-    Also can manually 
+    """ Calculate number of chunks based on self.chunksize for tqdm 
+    Maybe avoid for files that are too large >150 GB? Takes about ~2 minutes for such size
+    You can also just add manually the amount of lines to get an estimation
     """
-    # total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
-    total_lines = int(664075400)
+    print('Preparing tqdm...')
+    total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
+    # total_lines = int(664075400) # Lines for the Enamine_REAL file ~664M compounds
     total_chunks = (int(total_lines) + int(chunksize) - 1) // int(chunksize)
     return total_chunks
     
