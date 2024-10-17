@@ -1,0 +1,86 @@
+To efficiently map your data into a \(100 \times 100 \times 100\) cube without calculating the global minimum and maximum values, you can leverage the fact that the data projected by PCA (or Incremental PCA in this case) is approximately normally distributed along the principal components. You can use the statistical properties of the PCA-transformed data, such as its mean and standard deviation, to map the data into the cube.
+
+Here’s an approach that makes use of this statistical property:
+
+### Approach
+
+1. **Fit Incremental PCA**:
+   Fit your incremental PCA on the dataset in chunks to reduce its dimensionality to 3D. The output from the PCA will be three components (let's call them \(C_1\), \(C_2\), and \(C_3\)).
+
+2. **Calculate the Mean and Standard Deviation**:
+   For each chunk, while transforming the data using iPCA, you can compute the mean and standard deviation of each of the three PCA components. Over the entire dataset, you will accumulate running means and standard deviations for the principal components, which is computationally feasible for large datasets.
+
+   \[
+   \mu_{C1}, \sigma_{C1}, \mu_{C2}, \sigma_{C2}, \mu_{C3}, \sigma_{C3}
+   \]
+
+3. **Normalize Data Using a Normal Distribution Assumption**:
+   You can assume that the data along each principal component is normally distributed. Using this, you can map the data into the range [0, 100] by using a modified z-score transformation (this avoids needing exact min/max values):
+   
+   \[
+   Z_i = \frac{C_i - \mu_{C_i}}{\sigma_{C_i}} 
+   \]
+
+   Next, you can transform the z-score to a bounded range like [0, 100] by mapping the cumulative distribution function (CDF) of the normal distribution to the desired range. For example:
+   
+   \[
+   \text{Normalized Component} = 100 \times \Phi(Z_i)
+   \]
+
+   Here, \(\Phi(Z_i)\) is the CDF of the normal distribution for \(Z_i\).
+
+4. **Clamp or Adjust for Extreme Values**:
+   Even though most of the data follows a normal distribution, there might be some outliers. You can clamp extreme values (e.g., anything outside 3 standard deviations from the mean) to the bounds of the cube (0 or 100) to ensure that the data stays within your desired range.
+
+5. **Map to the 100×100×100 Cube**:
+   After applying this transformation for all three components, you will have data points normalized into the range of [0, 100] for each dimension. This effectively maps your entire dataset into a 3D cube without ever needing to compute global min-max values for the dataset.
+
+### Algorithm Outline
+
+Here’s a Python-like pseudocode that outlines the steps:
+
+```python
+import numpy as np
+from sklearn.decomposition import IncrementalPCA
+from scipy.stats import norm
+
+# Initialize Incremental PCA
+ipca = IncrementalPCA(n_components=3)
+
+# Assuming you are processing the data in chunks
+for chunk in dataset_chunks:
+    ipca.partial_fit(chunk)
+
+# Transform the dataset chunk by chunk
+for chunk in dataset_chunks:
+    transformed_chunk = ipca.transform(chunk)
+    
+    # Calculate mean and std dev of each component
+    mu_C1, sigma_C1 = np.mean(transformed_chunk[:, 0]), np.std(transformed_chunk[:, 0])
+    mu_C2, sigma_C2 = np.mean(transformed_chunk[:, 1]), np.std(transformed_chunk[:, 1])
+    mu_C3, sigma_C3 = np.mean(transformed_chunk[:, 2]), np.std(transformed_chunk[:, 2])
+    
+    # Normalize each component using Z-scores and map to [0, 100]
+    Z_C1 = (transformed_chunk[:, 0] - mu_C1) / sigma_C1
+    Z_C2 = (transformed_chunk[:, 1] - mu_C2) / sigma_C2
+    Z_C3 = (transformed_chunk[:, 2] - mu_C3) / sigma_C3
+
+    norm_C1 = 100 * norm.cdf(Z_C1)
+    norm_C2 = 100 * norm.cdf(Z_C2)
+    norm_C3 = 100 * norm.cdf(Z_C3)
+    
+    # Combine into the 100x100x100 cube representation
+    normalized_chunk = np.vstack([norm_C1, norm_C2, norm_C3]).T
+    
+    # Apply clamping to ensure values stay within bounds
+    normalized_chunk = np.clip(normalized_chunk, 0, 100)
+    
+    # Save or process the normalized chunk...
+```
+
+### Key Benefits of This Approach:
+1. **No Need for Min-Max Calculations**: You don't need to know the global min/max of the dataset, which would be computationally expensive. Instead, you only need the means and standard deviations of the principal components.
+2. **Handles Large Datasets**: By working with chunks of data and incremental PCA, this method is efficient for very large datasets, such as your 6 billion samples.
+3. **Statistically Justified Normalization**: Using the normal distribution assumption, you can map the data to a desired range in a way that retains the underlying structure and variance captured by the PCA.
+
+This should provide an efficient solution for normalizing your dataset into a 100×100×100 cube leveraging the statistical properties of PCA without needing to compute exact min/max values.
