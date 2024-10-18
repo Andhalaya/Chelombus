@@ -15,12 +15,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '10M_ZINC_id_Sim_mqn.csv')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/10M/output/')
 
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 6050
+CHUNKSIZE = 110000
 
 
 # =======================

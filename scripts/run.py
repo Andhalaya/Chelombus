@@ -3,7 +3,7 @@ import time
 import sys
 import pickle
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import DATA_FILE_PATH, CHUNKSIZE, PCA_N_COMPONENTS
+from config import DATA_FILE_PATH, CHUNKSIZE, OUTPUT_FILE_PATH, PCA_N_COMPONENTS
 from tqdm import tqdm 
 from sklearn.decomposition import IncrementalPCA
 
@@ -16,7 +16,7 @@ from tdigest import TDigest
 
 def main():
     # Initialize classes
-    data_handler = DataHandler(DATA_FILE_PATH, 36050)
+    data_handler = DataHandler(DATA_FILE_PATH, CHUNKSIZE)
     output_gen = OutputGenerator()
     fp_calculator = FingerprintCalculator()
     x_digest = TDigest()
@@ -82,26 +82,28 @@ def main():
         coordinates = ipca.transform(fingerprints)
         
         # Update digest for every batch
-        x_digest.batch_update(coordinates[:,0])
-        y_digest.batch_update(coordinates[:,1])
-        z_digest.batch_update(coordinates[:,2])
+        # x_digest.batch_update(coordinates[:,0])
+        # y_digest.batch_update(coordinates[:,1])
+        # z_digest.batch_update(coordinates[:,2])
 
         # Output coordiantes ~before clip with Percentiles. 
         output_gen.save_batch(idx, coordinates, smiles_list, features)
     
         del fingerprints, coordinates, smiles_list, features
     
-    percentiles = get_percentiles(x_digest,  y_digest, z_digest)
+    # Get Percentiles
+    # percentiles = get_percentiles(x_digest,  y_digest, z_digest)
 
-    # percentiles_10M = [(-23.69173900049878, 29.46851433296263), (-16.738348923448807, 23.54345794491185), (-10.819449416425204, 12.994996725530592)] 
+    percentiles = [(-23.69173900049878, 29.46851433296263), (-16.738348923448807, 23.54345794491185), (-10.819449416425204, 12.994996725530592)] 
     
-    # Mapp PCA coordinates to the 100x100x100 dimensional cube
-    # mapped_coordinates = output_gen.map_to_grid(coordinates, percentiles)
-
-    # Output 
+    # Mapp PCA coordinates to the 10x10x10 dimensional cube
+    start = time.time()
+    print('Fitting coordinates to cube')
+    for output in os.listdir(OUTPUT_FILE_PATH):
+        output_gen.fit_coordinates(output, percentiles)
+    end = time.time()
+    print(f'{end - start}')
     
-
-    # Clean
 
 
 if __name__ == '__main__':
