@@ -82,9 +82,10 @@ def main():
         coordinates = ipca.transform(fingerprints)
         
         # Update digest for every batch
-        # x_digest.batch_update(coordinates[:,0])
-        # y_digest.batch_update(coordinates[:,1])
-        # z_digest.batch_update(coordinates[:,2])
+        # This is slow process but ensures the best outcome
+        x_digest.batch_update(coordinates[:,0])
+        y_digest.batch_update(coordinates[:,1])
+        z_digest.batch_update(coordinates[:,2])
 
         # Output coordiantes ~before clip with Percentiles. 
         output_gen.save_batch(idx, coordinates, smiles_list, features)
@@ -92,9 +93,7 @@ def main():
         del fingerprints, coordinates, smiles_list, features
     
     # Get Percentiles
-    # percentiles = get_percentiles(x_digest,  y_digest, z_digest)
-
-    percentiles = [(-23.69173900049878, 29.46851433296263), (-16.738348923448807, 23.54345794491185), (-10.819449416425204, 12.994996725530592)] 
+    percentiles = get_percentiles(x_digest,  y_digest, z_digest)
     
     # Mapp PCA coordinates to the 10x10x10 dimensional cube
     start = time.time()
