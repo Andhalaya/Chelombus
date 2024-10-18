@@ -1,27 +1,15 @@
 # Chelombus
 
 ## Project Overview
-Objective: Process a molecular dataset to compute fingerprints, reduce dimensionality using PCA, and output 3D coordinates along with SMILES strings and any available features.
-
-PCA centers the data and projects it onto orthogonal axes (principal components) that capture the most variance. The transformed data along each principal component is often approximately normally distributed (assuming data is reasonably normal)
-
-
-Requirements:
-
-    Adaptable to datasets with varying features or just SMILES.
-    Output should include:
-        3D coordinates for each molecule.
-        Original SMILES strings.
-        Available features from the dataset
-
+Chelombus is a tool designed to visualize exceptionally large datasets of molecules—up to billions of compounds. It combines Principal Component Analysis with dynamic TMAP creation to efficiently cluster and visualize chemical spaces
 
 
 ### Structure
 
 ```bash
-molecule-pca-visualization/
+chelombus/
 ├── data/
-│   └── sample_dataset.csv         # Place your datasets here
+│   └── sample_dataset.csv         # Data
 ├── src/
 │   ├── __init__.py
 │   ├── data_handler.py            # Contains DataHandler class
@@ -47,178 +35,109 @@ molecule-pca-visualization/
 └── LICENSE                        # License information
 ```
 
-## Tests
 
-### compressed vs Uncompressed file
+---- 
 
-Since the files from the Enamine DB are very large ~150GB each with around 650M compounds (lines) each, I tried running the code on the compressed file (15GB) to test the speed when working with bz2 compressed files. The test made very clear that the tradeoff of speed for working with smaller files is not worth it. 
+## How It Works
 
-I will add an option to work with compressed files in case the resources of the machine is limited and slower speeds is not unconvinient. 
+### 1. Data Loading and Fingerprint Calculation
 
-```bash
-Time taken for compressed file (bz2): 64.01 seconds
-Time taken for uncompressed file: 3.78 seconds
-```
+Using the `HandleData` module, Chelombus automatically detects the SMILES column in various file formats, including `.csv`, `.txt`, and `.cxsmiles`. It processes the data in chunks to handle large datasets effectively.
 
+For each chunk, it calculates the Molecular Quantum Numbers (MQN) fingerprints, which are 42-dimensional vectors representing the chemical features of the molecules. MQN fingerprints are particularly suitable because they maintain variance well when reduced using PCA.
 
-### Chunk Size test
+The data and intermediate computations are saved in `.pkl` files for two main reasons:
 
-#### 10M 
-![Chunk-test](images/image.png)
+1. **Efficiency**: The code needs to iterate over the data multiple times—for fingerprint calculations, PCA transformations, and percentile computations. Storing intermediate steps accelerates the process.
+2. **Reusability**: If you need to re-run the code with different parameters, the pre-calculated files allow for quicker execution.
 
-Test of most optimal chunk size for 10M datapoints. For initial test with 10M datapoints we will set chunk_size = 6050
+### 2. Incremental PCA (iPCA)
 
-First test with chunk_size = 650 was 1 hour. 
-Now 10M compounds run under 8 minutes
+To reduce the dimensionality of the fingerprint vectors, Chelombus employs Incremental PCA (iPCA), a variant of standard PCA that processes data in batches—ideal for large datasets.
 
-#### 650M 
+- **Dimension Reduction**: While reducing dimensions, it's observed that variance drops below 95% when going below 3D. Therefore, it's recommended to keep at least 3 principal components.
+- **Configuration**: You can set the number of components with the `PCA_N_COMPONENTS` parameter in the `config.py` file.
+- **Process**:
+    - Performs a partial fit of the full MQN vectors for each batch.
+    - Transforms the data, reducing the 42-dimensional fingerprints to the selected lower-dimensional space.
 
-Test of most optimal chunk size for 650M datapoints
-![Chunk-test](images/Figure_1.png)
+### 3. Creating the N-Dimensional Grid (e.g., 3D Cube)
 
-Most optimal chunksize for 650M datapoints: 110000
+After reducing the fingerprints to, say, 3-dimensional vectors, we can represent these points in a 3D space. However, plotting all points directly isn't very informative due to data density and overlap.
 
-## Fitting to Cube
+Actually, if you do this you'll get something like this:
 
-Need to map the coordiantes into a 100x100x100 cube. 
+![alt text](images/output-1.png)
 
-### Normalizing Approach
-Normalizing the coordinates to fit within the [0,1] range and then scaling them to a 100×100×100 cube. 
+Which is not very useful. 
 
-However I am concern with the impact of outliers. If dataset contains outliers they can disproportionately affect the min-max values. To approach that case we could do: 
+To address this, we:
 
-$$
-x_{scaled} =   \frac{x - \mu_x}{\sigma_x }
-$$
+- **Divide Each PCA Dimension into Fixed Steps**: For example, we can divide each dimension into steps of 0.5 or integers (e.g., 0, 1, 2, ..., 100), creating a grid.
+- **Create a Grid or "Pixels"**: Each intersection point in the grid represents a "pixel" or bin in the N-dimensional space
 
-And then map the data witihin a certain number of standard deviations (e.g. $-3\sigma$ to $+3\sigma$)
-
-OR
-
-Use the 1th and 99th percentiles as the min-max values for normalization. 
-
-$$
-x_{scaled} = \frac{x- P1}{P99 - P1} \times 99
-$$
-
-
-#### Problems 
-However for very large datasets ~6 Billion this will probably not work as we cannot fit everything in memory. 
-
----
-### Simple Approach
-
-1. Calculate 0.01 and 99.99 percentiles 
-2. Take range on each axis that contains all points between percentiles
-2. Create grid by dividing each range on the axis in 100 steps (*pixels*). 
-3. Approximate each 3D coordinate from PCA to nearest pixel. 
-
-
-
-This is probably the eassiest solution, but again not very efficient for 10B compounds as it will need to calculate the percentiles. 
-
-
-#### Visualization
-![Data for 10M compounds](images/image-1.png)
-*Data for 10M compounds* 
-
-The histograms show that the data along each principal component $(x, y, z)$ is somewhat bell-shaped but with significant skewness and heavy tails, especially in the $x$ and $y$ components.
-
-**The Q-Q plots** (Quantile-Quantile plots) compare the quantiles of our data against the theoretical quantiles of a normal distribution. For perfectly normal data, the points should lie along the red diagonal line. In this case the middle points follow the line, suggesting that the central parts of your distributions are fairly normal.
-
-However, there are deviations at the tails, indicating that the data has heavier tails (i.e., more extreme values) than a normal distribution would predict. This is especially clear for the $x$ and $y$ components, where several points deviate strongly from the line
-
-
-#### Mapping it to 100x100x100 dimensions
+![alt text](images/grid-cube.png)
  
-**Mapping Points in the correct range to 100 Steps (or Pixels)**
+- **Assign Compounds to Pixels**: Each compound is mapped to the nearest **pixel** based on its PCA-reduced coordinates. Multiple compounds may fall into the same pixel, thus clustering the result. 
+### The fitting
+Now, what if we fit every compound with its respective 3D coordinates to these points in the cube? Every point will fall in the pixel that its closest to. Some of the points will be grouped in the same pixel and some pixels will have only one compound, or none. 
 
-To handle outilers we could see at the percentiles. We can take the $0.01$ Percentile and $99.99$ percentile and use the range between those values as our reference scale. Then divide the distance in as many pixels (steps) as we want to. This way we're only loosing $0.02%$ of the data which for 6 billlion compounds would be around 1.2 million compounds. 
+**Visual** **Example**
+**High Pixel Density (100×100×100 Grid)**: Mapping ~200,000 compounds results in a cluttered visualization.
 
-1. **Determine the Step Size**:
-
-For every coordinate we take the percentile_0.01, percentile_99.99 which will be our range that will be divided in 100 steps. 
-
-x = $[-23.65769251 ,30.68569253]$
-
-y = $[-16.20908626, 23.04514974]$
-
-z = $[-10.74670722, 12.98772289]$
-
-and we want to map this range into 100 steps.
+![alt text](images/smiles-grid.png)
 
 
-### Mapping Strategy
 
-Now we use these percentile-based ranges for each of the coordinates and apply the same logic as before.
+It's a little bit messy, so let's change the step size (pixel density) of the cube to 10x10x10. 
 
-#### Step Sizes for Each Coordinate
+![alt text](images/smaller-grid.png)
 
-- For **x**: 
-  - Range: $[-23.66, 30.69]$
-  - Total Range: $30.69 - (-23.66) = 54.34$
-  - Step Size: $ \frac{54.34}{100} = 0.5434$
+**Reduced Pixel Density (10×10×10 Grid)**: By increasing the step size, we get fewer pixels and more compounds per pixel, resulting in a clearer visualization.
 
-- For **y**:
-  - Range: $[-16.21, 23.05]$
-  - Total Range: $23.05 - (-16.21) = 39.26$
-  - Step Size: $ \frac{39.26}{100} = 0.3926$
+The range in which the points are dispersed is the same $[0, 100]$, we just changed the step size from 1 to 100, which means now the pixels can only take coordinates $[0, 10, 20 ..., 90, 100]$. 
 
-- For **z**:
-  - Range: $[-10.75, 12.99]$
-  - Total Range: $12.99 - (-10.75) = 23.74$
-  - Step Size: $ \frac{23.74}{100} = 0.2374$
+### 4. Selecting the Range for Each PCA Axis
 
-### Mapping Formula
+An important consideration in PCA analysis is how to select an appropriate range for each axis. Two key approaches are outlined below:
 
-For each coordinate, we map the values to a range of 100 steps using the following formula:
+#### Normalization (Recommended)
+
+A straightforward method for defining the range is normalizing the coordinates to fit within the $[0,1]$ interval and then scaling them into a 100×100×100 cube by multiplying each coordinate by 100. 
+
+However, this approach has limitations when the dataset contains outliers. Outliers can disproportionately affect the min-max values, leading to skewed results. To address this, one could use standard scaling:
 
 $$
-\text{Mapped X} = \left\lfloor \frac{x_i - \text{percentile}_\text{0.01}}{\text{step size}_x} \right\rfloor
-$$
-$$
-\text{Mapped Y} = \left\lfloor \frac{y_i - \text{percentile}_\text{0.01}}{\text{step size}_y} \right\rfloor
-$$
-$$
-\text{Mapped Z} = \left\lfloor \frac{z_i - \text{percentile}_\text{0.01}}{\text{step size}_z} \right\rfloor
+x_{scaled} = \frac{x - \mu_x}{\sigma_x}
 $$
 
+Then, map the scaled data within a specific number of standard deviations, for example, $-3\sigma$ to $+3\sigma$.
 
+While effective in many cases, this approach assumes normal distribution, which may not hold true for real-world data. In our dataset, histograms of each principal component $(x, y, z)$ suggest bell-shaped distributions, but with noticeable skewness and heavy tails, particularly in the $x$ and $y$ components.
 
-**Handling Points Outside the Range**:
-Since some points in the data may fall outside the range we've to decide how to handle those. We could either: 
+**Q-Q plots** (Quantile-Quantile plots) further illustrate this. These plots compare data quantiles to theoretical quantiles of a normal distribution. While the central parts of the distributions align with the expected normal pattern, the tails deviate significantly, indicating heavier tails (i.e., more extreme values) than a normal distribution would predict. This is especially prominent in the $x$ and $y$ components, where several data points deviate substantially.
 
-  - **Clamp the values**: Any value below $percentile_{0.01}$ is mapped to $percentile_{0.01}$, and any value above $percentile_{99.99}$ is mapped to $percentile_{99.99}$.
-  
-  - **Ignore the outliers**: Discard any points outside the range, focusing only on the central bulk of the data.
+Additionally, this method requires recalculating means and deviations for every batch of data, which is computationally inefficient for large datasets.
 
-### Output
+#### Percentiles and T-digest (Recommended)
 
-Top 50 pixels with the most molecules
-pixel_43_39_49: 786 SMILES
-...
-pixel_43_38_55: 566 SMILES
+A simpler and more robust alternative is using percentiles to define a range that covers most of the data. By examining the histograms, we can see that for the $x$ axis, the majority of data falls within the $[-20, 20]$ range. More precisely, if we look at the 0.01 percentile and 99.9 percentile, we get a range of $[-23.691, 29.468]$. This range captures almost all of the data while effectively handling outliers. Any point outside this range is assigned the minimum or maximum value of the range, ensuring only about 0.02% of the data (the outliers) are clustered at these boundary values.
 
-Also around ~70,000 molecules are not grouped together i.e. 1 molecule = 1 pixel 
+For efficient percentile calculation across billions of compounds, we use **T-Digest**, a data structure developed by Ted Dunning. T-Digest allows efficient percentile estimation in streaming or distributed data, enabling us to update percentiles dynamically as batches of data are processed.
 
-![alt text](images/image-4.png)
+While incorporating T-Digest increases computation time (e.g., adding 10 minutes to a typical 5-minute pipeline for 10 million compounds), we mitigate this by applying T-Digest to only ~5% of the data. This trade-off between speed and accuracy is worthwhile, as it clusters outlier data without sacrificing overall precision.
 
-1M pixels, color coding according to number of compounds clustered in each pixel
+By selecting ranges based on percentiles and utilizing T-Digest, we maintain efficient processing without significantly impacting data integrity.
 
-![alt text](images/image-3.png)
+### The clustering
 
+Now that we've successfully mapped the data points based on the selected percentiles, step size, and number of PCA dimensions, we can evaluate the effectiveness of the clustering. The question arises: _Does the clustering make sense, and is it effective?_
 
-Binned pixels. Groups the pixel values into larger bins by rounding down to the nearest multiple of the bin_size. In this case is set to 10. This is equivalent to having built a 10x10x10 cube instead of 100x100x100. 
+The answer is: **Yes!**
 
+By examining the molecular structures within some of the mapped clusters, we observe that molecules with very similar chemical structures are consistently grouped together. Below are a few visual examples:
 
-
-
-## TO DO
-- Add arguments parser to num_dimensions to reduce to 
-- Add support for txt and other file typess
-- Think of better output type than pd.DataFrame: options Parquet, HDF5, 
-- Mkdir output in output_generator.py
-- Add directory to save log outputs
-- Add argparser to set the dimensions of the cube? e.g. -dim 10 -> 10x10x10 -dim 100 -> 100x100x100
-- Add option to work direclty with the compressed files.
+These visuals demonstrate that our approach has effectively created meaningful clusters, even in high-dimensional space.
+![text](images/cluster_visualizations/cluster_133.png)
+![text](images/cluster_visualizations/cluster_26.png)
 
