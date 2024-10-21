@@ -1,0 +1,95 @@
+2024-10-21 13:21:35,642 - root - INFO - Logging initialized
+2024-10-21 13:21:35,642 - root - INFO - Processing file: data/10M/10M.csv
+2024-10-21 13:21:35,642 - root - INFO - Output directory: /home/afloresep/work/chelombus/data/10M/
+2024-10-21 13:21:35,642 - root - INFO - Chunk size: 110000
+2024-10-21 13:21:35,642 - root - INFO - Number of PCA components: 3
+2024-10-21 13:21:35,642 - root - INFO - Using 16 CPU cores
+2024-10-21 13:21:35,642 - root - INFO - Load mode: High memory usage (fast)
+2024-10-21 13:21:43,355 - root - INFO - Successfully processed chunk 5.
+2024-10-21 13:21:45,294 - root - INFO - Successfully processed chunk 6.
+2024-10-21 13:21:46,824 - root - INFO - Successfully processed chunk 7.
+2024-10-21 13:21:47,917 - root - INFO - Successfully processed chunk 8.
+2024-10-21 13:21:49,962 - root - INFO - Successfully processed chunk 9.
+2024-10-21 13:21:51,604 - root - INFO - Successfully processed chunk 10.
+2024-10-21 13:21:53,107 - root - INFO - Successfully processed chunk 11.
+2024-10-21 13:21:54,594 - root - INFO - Successfully processed chunk 12.
+2024-10-21 13:21:56,398 - root - INFO - Successfully processed chunk 13.
+2024-10-21 13:21:57,961 - root - INFO - Successfully processed chunk 14.
+2024-10-21 13:21:59,389 - root - INFO - Successfully processed chunk 15.
+2024-10-21 13:22:01,160 - root - INFO - Successfully processed chunk 16.
+2024-10-21 13:22:02,674 - root - INFO - Successfully processed chunk 17.
+2024-10-21 13:22:05,141 - root - INFO - Successfully processed chunk 18.
+2024-10-21 13:22:06,472 - root - INFO - Successfully processed chunk 19.
+2024-10-21 13:22:08,788 - root - INFO - Successfully processed chunk 20.
+2024-10-21 13:22:10,345 - root - INFO - Successfully processed chunk 21.
+2024-10-21 13:22:11,267 - root - INFO - Successfully processed chunk 22.
+2024-10-21 13:22:13,483 - root - INFO - Successfully processed chunk 23.
+2024-10-21 13:22:15,160 - root - INFO - Successfully processed chunk 24.
+2024-10-21 13:22:16,548 - root - INFO - Successfully processed chunk 25.
+2024-10-21 13:22:18,659 - root - INFO - Successfully processed chunk 26.
+2024-10-21 13:22:21,050 - root - INFO - Successfully processed chunk 27.
+2024-10-21 13:22:22,488 - root - INFO - Successfully processed chunk 28.
+2024-10-21 13:22:23,350 - root - INFO - Successfully processed chunk 29.
+2024-10-21 13:22:24,713 - root - INFO - Successfully processed chunk 30.
+2024-10-21 13:22:25,901 - root - INFO - Successfully processed chunk 31.
+2024-10-21 13:22:27,440 - root - INFO - Successfully processed chunk 32.
+2024-10-21 13:22:29,308 - root - INFO - Successfully processed chunk 33.
+2024-10-21 13:22:31,049 - root - INFO - Successfully processed chunk 34.
+2024-10-21 13:22:32,751 - root - INFO - Successfully processed chunk 35.
+2024-10-21 13:22:34,212 - root - INFO - Successfully processed chunk 36.
+2024-10-21 13:22:36,877 - root - INFO - Successfully processed chunk 37.
+2024-10-21 13:22:37,158 - root - INFO - Successfully processed chunk 38.
+2024-10-21 13:22:39,233 - root - INFO - Successfully processed chunk 39.
+2024-10-21 13:22:40,836 - root - INFO - Successfully processed chunk 40.
+2024-10-21 13:22:42,216 - root - INFO - Successfully processed chunk 41.
+2024-10-21 13:22:44,149 - root - INFO - Successfully processed chunk 42.
+2024-10-21 13:22:45,363 - root - INFO - Successfully processed chunk 43.
+2024-10-21 13:22:48,020 - root - INFO - Successfully processed chunk 44.
+2024-10-21 13:22:49,537 - root - INFO - Successfully processed chunk 45.
+2024-10-21 13:22:51,234 - root - INFO - Successfully processed chunk 46.
+2024-10-21 13:22:52,337 - root - INFO - Successfully processed chunk 47.
+2024-10-21 13:22:53,803 - root - INFO - Successfully processed chunk 48.
+2024-10-21 13:22:55,556 - root - INFO - Successfully processed chunk 49.
+2024-10-21 13:22:57,592 - root - INFO - Successfully processed chunk 50.
+2024-10-21 13:22:59,643 - root - INFO - Successfully processed chunk 51.
+2024-10-21 13:23:01,180 - root - INFO - Successfully processed chunk 52.
+2024-10-21 13:23:02,791 - root - INFO - Successfully processed chunk 53.
+2024-10-21 13:23:04,212 - root - INFO - Successfully processed chunk 54.
+2024-10-21 13:23:05,424 - root - INFO - Successfully processed chunk 55.
+2024-10-21 13:23:07,696 - root - INFO - Successfully processed chunk 56.
+2024-10-21 13:23:09,794 - root - INFO - Successfully processed chunk 57.
+2024-10-21 13:23:11,806 - root - INFO - Successfully processed chunk 58.
+2024-10-21 13:23:13,343 - root - INFO - Successfully processed chunk 59.
+2024-10-21 13:23:16,023 - root - INFO - Successfully processed chunk 60.
+2024-10-21 13:23:19,150 - root - INFO - Successfully processed chunk 62.
+2024-10-21 13:23:19,338 - root - INFO - Successfully processed chunk 61.
+2024-10-21 13:23:22,130 - root - INFO - Successfully processed chunk 63.
+2024-10-21 13:23:23,565 - root - INFO - Successfully processed chunk 64.
+2024-10-21 13:23:25,158 - root - INFO - Successfully processed chunk 66.
+2024-10-21 13:23:25,832 - root - INFO - Successfully processed chunk 65.
+2024-10-21 13:23:28,035 - root - INFO - Successfully processed chunk 67.
+2024-10-21 13:23:28,925 - root - INFO - Successfully processed chunk 68.
+2024-10-21 13:23:30,064 - root - INFO - Successfully processed chunk 69.
+2024-10-21 13:23:33,254 - root - INFO - Successfully processed chunk 70.
+2024-10-21 13:23:34,204 - root - INFO - Successfully processed chunk 71.
+2024-10-21 13:23:35,704 - root - INFO - Successfully processed chunk 72.
+2024-10-21 13:23:37,597 - root - INFO - Successfully processed chunk 73.
+2024-10-21 13:23:39,493 - root - INFO - Successfully processed chunk 74.
+2024-10-21 13:23:40,631 - root - INFO - Successfully processed chunk 75.
+2024-10-21 13:23:42,392 - root - INFO - Successfully processed chunk 76.
+2024-10-21 13:23:43,866 - root - INFO - Successfully processed chunk 77.
+2024-10-21 13:23:45,590 - root - INFO - Successfully processed chunk 78.
+2024-10-21 13:23:47,616 - root - INFO - Successfully processed chunk 79.
+2024-10-21 13:23:49,235 - root - INFO - Successfully processed chunk 80.
+2024-10-21 13:23:51,099 - root - INFO - Successfully processed chunk 81.
+2024-10-21 13:23:52,582 - root - INFO - Successfully processed chunk 82.
+2024-10-21 13:23:53,991 - root - INFO - Successfully processed chunk 83.
+2024-10-21 13:23:56,385 - root - INFO - Successfully processed chunk 84.
+2024-10-21 13:23:57,148 - root - INFO - Successfully processed chunk 85.
+2024-10-21 13:23:59,338 - root - INFO - Successfully processed chunk 86.
+2024-10-21 13:24:00,672 - root - INFO - Successfully processed chunk 87.
+2024-10-21 13:24:01,422 - root - INFO - Successfully processed chunk 88.
+2024-10-21 13:24:01,984 - root - INFO - Successfully processed chunk 90.
+2024-10-21 13:24:02,051 - root - INFO - Successfully processed chunk 89.
+2024-10-21 13:24:02,116 - root - INFO - Preprocessing of data took: 2.43 minutes
+2024-10-21 13:24:17,031 - root - INFO - Performing Dimensionality Reduction...
