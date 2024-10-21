@@ -2,6 +2,7 @@ import os
 import time
 import sys
 import pickle
+import h5py
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import DATA_FILE_PATH, CHUNKSIZE, OUTPUT_FILE_PATH, PCA_N_COMPONENTS
 from tqdm import tqdm 
@@ -96,11 +97,12 @@ def main():
 
     percentiles = [(-23.69173900049878, 29.46851433296263), (-16.738348923448807, 23.54345794491185), (-10.819449416425204, 12.994996725530592)] 
     
-    # Mapp PCA coordinates to the 10x10x10 dimensional cube
+    # Mapp PCA coordinates to the 20x10x5 3D-dimensional cube
+    output_gen.steps = [20, 10, 5]  # number of steps to be taken on each dimension
     start = time.time()
     print('Fitting coordinates to cube')
     for output in os.listdir(OUTPUT_FILE_PATH):
-        output_gen.fit_coordinates(output, percentiles)
+        output_gen.fit_coord_multidimensional(output, percentiles)
     end = time.time()
     print(f'{end - start}')
     
