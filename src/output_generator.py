@@ -45,9 +45,9 @@ class OutputGenerator():
          for i in range(len(coordinates[0])):
             batch_data[f'PCA_{i+1}'] = coordinates[:, i]
         
-            output_path = os.path.join(OUTPUT_FILE_PATH, f'batch_data_{batch_idx}.csv')  
+            output_path = os.path.join(OUTPUT_FILE_PATH, f'output/batch_data_{batch_idx}.csv')  
 
-            os.makedirs(OUTPUT_FILE_PATH, exist_ok=True)
+            os.makedirs(os.path.join(OUTPUT_FILE_PATH, 'output'), exist_ok=True)
 
             batch_data.to_csv(output_path, index=False)
 
@@ -64,7 +64,7 @@ class OutputGenerator():
                     return (min_value) + (step_size)*round((coordinate - min_value)/step_size)
                     
 
-    def fit_coordinates(self, output: str, percentiles:list, grid:list):
+    def fit_coordinates(self, output: str, percentiles:list):
             #TODO: Handle more dimensions than 3 
 
             """
@@ -79,18 +79,18 @@ class OutputGenerator():
             values in the y-axis will take coordinates from 0,10 in steps of 1:  0,1, 2, ... , 9, 10 
             values in the z-axis will take coordinates from -20, 10 in steps of: -20, -15,..., 15, 20
             """
-
-            step_PCA_1 = (percentiles[0][1] - percentiles[0][0])/ grid[0] 
-            step_PCA_2 = (percentiles[1][1] - percentiles[1][0])/ grid[1] 
-            step_PCA_3 = (percentiles[2][1] - percentiles[2][0])/ grid[2] 
             
-            df_output = pd.read_csv(os.path.join(OUTPUT_FILE_PATH, output))
+            step_PCA_1 = (percentiles[0][1] - percentiles[0][0])/ self.steps[0] 
+            step_PCA_2 = (percentiles[1][1] - percentiles[1][0])/ self.steps[1] 
+            step_PCA_3 = (percentiles[2][1] - percentiles[2][0])/ self.steps[2] 
+            
+            df_output = pd.read_csv(os.path.join(OUTPUT_FILE_PATH, ('output/'+output)))
             
             df_output['PCA_1'] = df_output['PCA_1'].apply(lambda x: self._round_to_step(x, percentiles[0][0], percentiles[0][1], step_PCA_1))
             df_output['PCA_2'] = df_output['PCA_2'].apply(lambda x: self._round_to_step(x, percentiles[1][0], percentiles[1][1], step_PCA_2))
             df_output['PCA_3'] = df_output['PCA_3'].apply(lambda x: self._round_to_step(x, percentiles[2][0], percentiles[2][1], step_PCA_3))
 
-            output_path = os.path.join(OUTPUT_FILE_PATH, output)
+            output_path = os.path.join(OUTPUT_FILE_PATH, ('output/'+output))
             df_output.to_csv(output_path, index=False)
 
     def fit_coord_multidimensional(self, output:str , percentiles: list):
@@ -105,13 +105,17 @@ class OutputGenerator():
             if len(percentiles) != len(self.steps):
                  raise ValueError("Percentiles and grid must have same number of dimensions")
             
-            df_output = pd.read_csv(os.path.join(OUTPUT_FILE_PATH, output))
+            df_output = pd.read_csv(os.path.join(OUTPUT_FILE_PATH, ('output/'+output)))
 
             for dim in range(len(percentiles)):
                 step = (percentiles[dim][1] - percentiles[dim][0]) / self.steps[dim]
                 pca_column = f'PCA_{dim + 1}'
-
                 # Apply rounding for each dimension
-            df_output[pca_column] = df_output[pca_column].apply(
-            lambda x: self._round_to_step(x, percentiles[dim][0], percentiles[dim][1], step)
-            )
+                df_output[pca_column] = df_output[pca_column].apply(
+                lambda x: self._round_to_step(x, percentiles[dim][0], percentiles[dim][1], step)
+                )
+            
+            output_path = os.path.join(OUTPUT_FILE_PATH, ('output/'+output))
+
+            df_output.to_csv(output_path, index=False)
+
