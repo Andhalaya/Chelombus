@@ -221,4 +221,4 @@ Binned pixels. Groups the pixel values into larger bins by rounding down to the 
 - Add directory to save log outputs
 - Add argparser to set the dimensions of the cube? e.g. -dim 10 -> 10x10x10 -dim 100 -> 100x100x100
 - Add option to work direclty with the compressed files.
-
+- Log Errors Both to the Log File and Print Them to the Console
