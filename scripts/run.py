@@ -169,14 +169,14 @@ def main():
                 smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
                 features = h5f['features'][:].astype(str)
 
-        # Get coordinates in np.array(n_smiles, n_pca_dim)
-        coordinates = ipca.transform(fingerprints)
-        
-        # Update digest for every batch
-        # This is slow process but ensures the best outcome
-        x_digest.batch_update(coordinates[:,0])
-        y_digest.batch_update(coordinates[:,1])
-        z_digest.batch_update(coordinates[:,2])
+            # Get coordinates in np.array(n_smiles, n_pca_dim)
+            coordinates = ipca.transform(fingerprints)
+
+            # Update digest for every batch
+            if coordinates.shape[1] >= 3:  # Ensure there are at least 3 components
+                x_digest.batch_update(coordinates[:, 0])
+                y_digest.batch_update(coordinates[:, 1])
+                z_digest.batch_update(coordinates[:, 2])
 
             # Output coordinates before clipping with Percentiles.
             output_gen.save_batch(idx, coordinates, smiles_list, features)
