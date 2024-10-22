@@ -15,7 +15,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '1M_ZINC.csv')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/10M/')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/125M/')
 
 # =======================
 # Loading parameters

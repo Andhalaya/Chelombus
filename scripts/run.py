@@ -38,8 +38,8 @@ def parse_arguments():
     return parser.parse_args()
 
 def setup_logging(log_level):
-    logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
-    # logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
+    # logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
+    logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
     
     logging.info("Logging initialized")
 
@@ -64,6 +64,7 @@ def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
         # Ensure output directories exist
         os.makedirs(os.path.join(output_dir, 'fp_chunks'), exist_ok=True)
         os.makedirs(os.path.join(output_dir, 'features_chunks'), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
 
         # Save fingerprints in HDF5 format
         with h5py.File(fp_chunk_path, 'w') as h5f:
@@ -72,9 +73,8 @@ def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
         # Save smiles and features in HDF5 format
         with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
             h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
-            h5f.create_dataset('features', data=features)
+            h5f.create_dataset('features', data= np.array(features, dtype='S')) 
 
-        logging.info(f'Successfully processed chunk {idx}.')
 
     except Exception as e:
         logging.error(f"Error processing chunk {idx}: {e}", exc_info=True)
@@ -167,7 +167,7 @@ def main():
             feat_chunk_path = os.path.join(args.output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5')
             with h5py.File(feat_chunk_path, 'r') as h5f:
                 smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
-                features = h5f['features'][:]
+                features = h5f['features'][:].astype(str)
 
             # Get coordinates in np.array(n_smiles, n_pca_dim)
             coordinates = ipca.transform(fingerprints)

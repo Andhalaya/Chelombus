@@ -93,3 +93,383 @@
 2024-10-21 13:24:02,051 - root - INFO - Successfully processed chunk 89.
 2024-10-21 13:24:02,116 - root - INFO - Preprocessing of data took: 2.43 minutes
 2024-10-21 13:24:17,031 - root - INFO - Performing Dimensionality Reduction...
+2024-10-22 08:56:38,071 - root - INFO - Logging initialized
+2024-10-22 08:56:38,072 - root - INFO - Processing file: data/10M.csv
+2024-10-22 08:56:38,072 - root - INFO - Output directory: /home/afloresep/work/chelombus/data/10M/
+2024-10-22 08:56:38,072 - root - INFO - Chunk size: 110000
+2024-10-22 08:56:38,072 - root - INFO - Number of PCA components: 3
+2024-10-22 08:56:38,072 - root - INFO - Using 16 CPU cores
+2024-10-22 08:56:38,072 - root - INFO - Load mode: High memory usage (fast)
+2024-10-22 08:56:44,189 - root - INFO - Successfully processed chunk 0.
+2024-10-22 08:56:46,366 - root - INFO - Successfully processed chunk 1.
+2024-10-22 08:56:48,237 - root - INFO - Successfully processed chunk 2.
+2024-10-22 08:56:49,683 - root - INFO - Successfully processed chunk 3.
+2024-10-22 08:56:50,366 - root - INFO - Successfully processed chunk 4.
+2024-10-22 08:56:52,446 - root - INFO - Successfully processed chunk 5.
+2024-10-22 08:56:53,977 - root - INFO - Successfully processed chunk 6.
+2024-10-22 08:56:56,201 - root - INFO - Successfully processed chunk 7.
+2024-10-22 08:56:57,775 - root - INFO - Successfully processed chunk 8.
+2024-10-22 08:56:59,085 - root - INFO - Successfully processed chunk 9.
+2024-10-22 08:57:00,439 - root - INFO - Successfully processed chunk 10.
+2024-10-22 08:57:02,473 - root - INFO - Successfully processed chunk 11.
+2024-10-22 08:57:04,518 - root - INFO - Successfully processed chunk 12.
+2024-10-22 08:57:06,085 - root - INFO - Successfully processed chunk 13.
+2024-10-22 08:57:07,443 - root - INFO - Successfully processed chunk 14.
+2024-10-22 08:57:09,253 - root - INFO - Successfully processed chunk 15.
+2024-10-22 08:57:10,750 - root - INFO - Successfully processed chunk 16.
+2024-10-22 08:57:12,548 - root - INFO - Successfully processed chunk 17.
+2024-10-22 08:57:14,718 - root - INFO - Successfully processed chunk 18.
+2024-10-22 08:57:16,409 - root - INFO - Successfully processed chunk 19.
+2024-10-22 08:57:18,906 - root - INFO - Successfully processed chunk 20.
+2024-10-22 08:57:20,251 - root - INFO - Successfully processed chunk 21.
+2024-10-22 08:57:20,939 - root - INFO - Successfully processed chunk 22.
+2024-10-22 08:57:22,809 - root - INFO - Successfully processed chunk 23.
+2024-10-22 08:57:23,054 - root - INFO - Successfully processed chunk 24.
+2024-10-22 08:57:25,697 - root - INFO - Successfully processed chunk 25.
+2024-10-22 08:57:27,299 - root - INFO - Successfully processed chunk 26.
+2024-10-22 08:57:28,719 - root - INFO - Successfully processed chunk 27.
+2024-10-22 08:57:30,047 - root - INFO - Successfully processed chunk 28.
+2024-10-22 08:57:31,377 - root - INFO - Successfully processed chunk 29.
+2024-10-22 08:57:33,282 - root - INFO - Successfully processed chunk 30.
+2024-10-22 08:57:35,101 - root - INFO - Successfully processed chunk 31.
+2024-10-22 08:57:37,222 - root - INFO - Successfully processed chunk 32.
+2024-10-22 08:57:38,251 - root - INFO - Successfully processed chunk 33.
+2024-10-22 08:57:40,068 - root - INFO - Successfully processed chunk 34.
+2024-10-22 08:57:42,845 - root - INFO - Successfully processed chunk 35.
+2024-10-22 08:57:43,716 - root - INFO - Successfully processed chunk 36.
+2024-10-22 08:57:44,853 - root - INFO - Successfully processed chunk 37.
+2024-10-22 08:57:47,419 - root - INFO - Successfully processed chunk 38.
+2024-10-22 08:57:49,462 - root - INFO - Successfully processed chunk 39.
+2024-10-22 08:57:49,654 - root - INFO - Successfully processed chunk 40.
+2024-10-22 08:57:51,996 - root - INFO - Successfully processed chunk 41.
+2024-10-22 08:57:53,357 - root - INFO - Successfully processed chunk 42.
+2024-10-22 08:57:54,614 - root - INFO - Successfully processed chunk 43.
+2024-10-22 08:57:56,713 - root - INFO - Successfully processed chunk 44.
+2024-10-22 08:57:58,440 - root - INFO - Successfully processed chunk 45.
+2024-10-22 08:58:00,438 - root - INFO - Successfully processed chunk 46.
+2024-10-22 08:58:01,674 - root - INFO - Successfully processed chunk 47.
+2024-10-22 08:58:03,482 - root - INFO - Successfully processed chunk 48.
+2024-10-22 08:58:05,509 - root - INFO - Successfully processed chunk 49.
+2024-10-22 08:58:06,386 - root - INFO - Successfully processed chunk 50.
+2024-10-22 08:58:08,728 - root - INFO - Successfully processed chunk 51.
+2024-10-22 08:58:10,068 - root - INFO - Successfully processed chunk 52.
+2024-10-22 08:58:11,561 - root - INFO - Successfully processed chunk 53.
+2024-10-22 08:58:12,918 - root - INFO - Successfully processed chunk 54.
+2024-10-22 08:58:15,083 - root - INFO - Successfully processed chunk 55.
+2024-10-22 08:58:16,863 - root - INFO - Successfully processed chunk 56.
+2024-10-22 08:58:17,943 - root - INFO - Successfully processed chunk 57.
+2024-10-22 08:58:20,288 - root - INFO - Successfully processed chunk 58.
+2024-10-22 08:58:22,130 - root - INFO - Successfully processed chunk 59.
+2024-10-22 08:58:23,519 - root - INFO - Successfully processed chunk 60.
+2024-10-22 08:58:25,479 - root - INFO - Successfully processed chunk 61.
+2024-10-22 08:58:28,106 - root - INFO - Successfully processed chunk 62.
+2024-10-22 08:58:29,841 - root - INFO - Successfully processed chunk 63.
+2024-10-22 08:58:31,004 - root - INFO - Successfully processed chunk 64.
+2024-10-22 08:58:33,615 - root - INFO - Successfully processed chunk 65.
+2024-10-22 08:58:34,894 - root - INFO - Successfully processed chunk 66.
+2024-10-22 08:58:36,802 - root - INFO - Successfully processed chunk 68.
+2024-10-22 08:58:37,095 - root - INFO - Successfully processed chunk 67.
+2024-10-22 08:58:38,229 - root - INFO - Successfully processed chunk 69.
+2024-10-22 08:58:40,436 - root - INFO - Successfully processed chunk 70.
+2024-10-22 08:58:42,198 - root - INFO - Successfully processed chunk 71.
+2024-10-22 08:58:44,249 - root - INFO - Successfully processed chunk 72.
+2024-10-22 08:58:45,926 - root - INFO - Successfully processed chunk 73.
+2024-10-22 08:58:46,658 - root - INFO - Successfully processed chunk 74.
+2024-10-22 08:58:48,698 - root - INFO - Successfully processed chunk 75.
+2024-10-22 08:58:50,351 - root - INFO - Successfully processed chunk 76.
+2024-10-22 08:58:51,379 - root - INFO - Successfully processed chunk 77.
+2024-10-22 08:58:52,596 - root - INFO - Successfully processed chunk 78.
+2024-10-22 08:58:54,308 - root - INFO - Successfully processed chunk 79.
+2024-10-22 08:58:55,689 - root - INFO - Successfully processed chunk 80.
+2024-10-22 08:58:58,069 - root - INFO - Successfully processed chunk 81.
+2024-10-22 08:58:59,882 - root - INFO - Successfully processed chunk 82.
+2024-10-22 08:59:01,294 - root - INFO - Successfully processed chunk 83.
+2024-10-22 08:59:02,339 - root - INFO - Successfully processed chunk 84.
+2024-10-22 08:59:04,212 - root - INFO - Successfully processed chunk 85.
+2024-10-22 08:59:05,675 - root - INFO - Successfully processed chunk 86.
+2024-10-22 08:59:06,927 - root - INFO - Successfully processed chunk 87.
+2024-10-22 08:59:07,254 - root - INFO - Successfully processed chunk 88.
+2024-10-22 08:59:07,774 - root - INFO - Successfully processed chunk 89.
+2024-10-22 08:59:07,906 - root - INFO - Successfully processed chunk 90.
+2024-10-22 08:59:07,971 - root - INFO - Preprocessing of data took: 2.48 minutes
+2024-10-22 08:59:22,294 - root - INFO - Performing Dimensionality Reduction...
+2024-10-22 09:10:30,702 - root - INFO - Fitting coordinates to cube
+2024-10-22 09:11:05,616 - root - INFO - Total time fitting coordinates: 0.58 minutes
+2024-10-22 09:11:05,619 - root - INFO - Total execution time: 14.46 minutes
+2024-10-22 09:14:59,408 - root - INFO - Logging initialized
+2024-10-22 09:14:59,408 - root - INFO - Processing file: data/1M.cxsmiles
+2024-10-22 09:14:59,408 - root - INFO - Output directory: /home/afloresep/work/chelombus/data/10M/
+2024-10-22 09:14:59,408 - root - INFO - Chunk size: 110000
+2024-10-22 09:14:59,408 - root - INFO - Number of PCA components: 3
+2024-10-22 09:14:59,408 - root - INFO - Using 16 CPU cores
+2024-10-22 09:14:59,408 - root - INFO - Load mode: High memory usage (fast)
+2024-10-22 09:15:03,995 - root - INFO - Preprocessing of data took: 0.07 minutes
+2024-10-22 09:15:05,974 - root - INFO - Performing Dimensionality Reduction...
+2024-10-22 09:16:41,973 - root - INFO - Logging initialized
+2024-10-22 09:16:41,973 - root - INFO - Processing file: data/1M.cxsmiles
+2024-10-22 09:16:41,973 - root - INFO - Output directory: /home/afloresep/work/chelombus/data/1M/
+2024-10-22 09:16:41,973 - root - INFO - Chunk size: 110000
+2024-10-22 09:16:41,973 - root - INFO - Number of PCA components: 3
+2024-10-22 09:16:41,973 - root - INFO - Using 16 CPU cores
+2024-10-22 09:16:41,973 - root - INFO - Load mode: High memory usage (fast)
+2024-10-22 09:16:52,217 - root - ERROR - Error processing chunk 0: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:16:53,283 - root - ERROR - Error processing chunk 1: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:16:53,598 - root - ERROR - Error processing chunk 2: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:16:55,681 - root - ERROR - Error processing chunk 9: No conversion path for dtype: dtype('<U110')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U110')
+2024-10-22 09:16:58,281 - root - ERROR - Error processing chunk 3: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:16:59,114 - root - ERROR - Error processing chunk 4: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:17:01,500 - root - ERROR - Error processing chunk 5: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:17:03,366 - root - ERROR - Error processing chunk 6: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:17:03,755 - root - ERROR - Error processing chunk 7: No conversion path for dtype: dtype('<U99')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U99')
+2024-10-22 09:17:05,033 - root - ERROR - Error processing chunk 8: No conversion path for dtype: dtype('<U111')
+Traceback (most recent call last):
+  File "scripts/run.py", line 75, in process_chunk
+    h5f.create_dataset('features', data=features)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 183, in create_dataset
+    dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/dataset.py", line 88, in make_new_dset
+    tid = h5t.py_create(dtype, logical=1)
+  File "h5py/h5t.pyx", line 1664, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1688, in h5py.h5t.py_create
+  File "h5py/h5t.pyx", line 1754, in h5py.h5t.py_create
+TypeError: No conversion path for dtype: dtype('<U111')
+2024-10-22 09:17:05,309 - root - INFO - Preprocessing of data took: 0.39 minutes
+2024-10-22 09:17:06,738 - root - INFO - Performing Dimensionality Reduction...
+2024-10-22 09:17:06,796 - root - ERROR - Error during data transformation for chunk 0: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:06,848 - root - ERROR - Error during data transformation for chunk 1: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:06,896 - root - ERROR - Error during data transformation for chunk 2: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:06,944 - root - ERROR - Error during data transformation for chunk 3: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:06,992 - root - ERROR - Error during data transformation for chunk 4: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,040 - root - ERROR - Error during data transformation for chunk 5: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,088 - root - ERROR - Error during data transformation for chunk 6: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,134 - root - ERROR - Error during data transformation for chunk 7: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,182 - root - ERROR - Error during data transformation for chunk 8: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,190 - root - ERROR - Error during data transformation for chunk 9: "Unable to open object (object 'features' doesn't exist)"
+Traceback (most recent call last):
+  File "scripts/run.py", line 170, in main
+    features = h5f['features'][:]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/h5py/_hl/group.py", line 357, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 190, in h5py.h5o.open
+KeyError: "Unable to open object (object 'features' doesn't exist)"
+2024-10-22 09:17:07,190 - root - ERROR - Error calculating percentiles: Tree is empty
+Traceback (most recent call last):
+  File "scripts/run.py", line 192, in main
+    percentiles = get_percentiles(x_digest, y_digest, z_digest)
+  File "/home/afloresep/work/chelombus/src/output_generator.py", line 10, in get_percentiles
+    percentiles = [(x_digest.percentile(0.01), x_digest.percentile(99.99)),
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/tdigest/tdigest.py", line 173, in percentile
+    return self.C.min_item()[1].mean
+  File "/home/afloresep/miniforge3/envs/tmap/lib/python3.7/site-packages/accumulation_tree/abctree.py", line 622, in min_item
+    raise ValueError("Tree is empty")
+ValueError: Tree is empty
+2024-10-22 09:17:07,191 - root - INFO - Fitting coordinates to cube
+2024-10-22 09:17:07,191 - root - ERROR - Error fitting coordinates to cube: [Errno 2] No such file or directory: '/home/afloresep/work/chelombus/data/1M/output'
+Traceback (most recent call last):
+  File "scripts/run.py", line 206, in main
+    for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
+FileNotFoundError: [Errno 2] No such file or directory: '/home/afloresep/work/chelombus/data/1M/output'
+2024-10-22 09:17:07,191 - root - INFO - Total time fitting coordinates: 0.00 minutes
+2024-10-22 09:17:07,193 - root - INFO - Total execution time: 0.42 minutes
