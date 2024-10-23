@@ -38,8 +38,8 @@ def parse_arguments():
     return parser.parse_args()
 
 def setup_logging(log_level):
-    # logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
-    logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
+    logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
+    # logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
     
     logging.info("Logging initialized")
 
@@ -70,12 +70,13 @@ def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
         with h5py.File(fp_chunk_path, 'w') as h5f:
             h5f.create_dataset('fingerprints', data=fingerprints)
 
-        # Save smiles and features in HDF5 format
+         # Save smiles and features in HDF5 format
         with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
             h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
             h5f.create_dataset('features', data= np.array(features, dtype='S')) 
 
-
+        del fingerprints, smiles_list, features 
+        
     except Exception as e:
         logging.error(f"Error processing chunk {idx}: {e}", exc_info=True)
 
@@ -167,50 +168,54 @@ def main():
             feat_chunk_path = os.path.join(args.output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5')
             with h5py.File(feat_chunk_path, 'r') as h5f:
                 smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
-                features = h5f['features'][:].astype(str)
+                # features = h5f['features'][:].astype(str)
 
-            # Get coordinates in np.array(n_smiles, n_pca_dim)
+            # # Get coordinates in np.array(n_smiles, n_pca_dim)
             coordinates = ipca.transform(fingerprints)
+            # smiles_list = []
+            features = []
 
             # Update digest for every batch
-            if coordinates.shape[1] >= 3:  # Ensure there are at least 3 components
-                x_digest.batch_update(coordinates[:, 0])
-                y_digest.batch_update(coordinates[:, 1])
-                z_digest.batch_update(coordinates[:, 2])
+            # if coordinates.shape[1] >= 3:  # Ensure there are at least 3 components
+            # x_digest.batch_update(coordinates[:, 0])
+            # y_digest.batch_update(coordinates[:, 1])
+            # z_digest.batch_update(coordinates[:, 2])
 
             # Output coordinates before clipping with Percentiles.
             output_gen.save_batch(idx, coordinates, smiles_list, features)
 
             del fingerprints, coordinates, smiles_list, features 
-
+            os.remove(fp_chunk_path)
+            os.remove(feat_chunk_path)
+            
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
 
-    # Get Percentiles
-    try:
+    # # Get Percentiles
+    # try:
 
-        percentiles = get_percentiles(x_digest, y_digest, z_digest)
+    #     percentiles = get_percentiles(x_digest, y_digest, z_digest)
 
-    except Exception as e:
-    # Map PCA coordinates to the 20x10x5 3D-dimensional cube
-        logging.error(f"Error calculating percentiles: {e}", exc_info=True)
-        # Use default percentiles if calculation fails?
+    # except Exception as e:
+    # # Map PCA coordinates to the 20x10x5 3D-dimensional cube
+    #     logging.error(f"Error calculating percentiles: {e}", exc_info=True)
+    #     # Use default percentiles if calculation fails?
 
-    # Map PCA coordinates to the 20x10x5 3D-dimensional cube
-    output_gen.steps = [20, 10, 5]  # Number of steps to be taken on each dimension
+    # # Map PCA coordinates to the 20x10x5 3D-dimensional cube
+    # output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
 
-    start = time.time()
+    # start = time.time()
 
-    logging.info('Fitting coordinates to cube')
-    try:
-        for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
-            output_gen.fit_coord_multidimensional(output_file, percentiles)
+    # logging.info('Fitting coordinates to cube')
+    # try:
+    #     for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
+    #         output_gen.fit_coord_multidimensional(output_file, percentiles)
 
-    except Exception as e:
-        logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
+    # except Exception as e:
+    #     logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
 
-    end = time.time()
-    logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
+    # end = time.time()
+    # logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
 
 if __name__ == '__main__':
     start_time = time.time() 
