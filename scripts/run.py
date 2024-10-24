@@ -178,23 +178,27 @@ def main():
                 features = []
 
             coordinates = ipca.transform(fingerprints)
-            
+              
+            # Output coordinates before clipping with Percentiles.
+            output_gen.save_batch(idx, coordinates, smiles_list, features, args.output_dir)
+
+ 
             if args.fit == 1:
 
                 # Update digest for every batch
                 x_digest.batch_update(coordinates[:, 0])
                 y_digest.batch_update(coordinates[:, 1])
                 z_digest.batch_update(coordinates[:, 2])
-
-            # Output coordinates before clipping with Percentiles.
-            output_gen.save_batch(idx, coordinates, smiles_list, features)
-
+                
+                continue 
+        
+            # Free memory space
             del fingerprints, coordinates, smiles_list, features 
             
-            # Delete intermediate files 
+            # Delete intermediate files after loading them 
             os.remove(fp_chunk_path)
             os.remove(feat_chunk_path)
-        
+
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
 
@@ -203,27 +207,28 @@ def main():
     
     if args.fit == 1:
         try:
-         percentiles = get_percentiles(x_digest, y_digest, z_digest)
+            percentiles = get_percentiles(x_digest, y_digest, z_digest)
 
         except Exception as e:
-         logging.error(f"Error calculating percentiles: {e}", exc_info=True)
-         # Use default percentiles if calculation fails?
+            logging.error(f"Error calculating percentiles: {e}", exc_info=True)
+            # Use default percentiles if calculation fails?
 
         #Map PCA coordinates to the 20x10x5 3D-dimensional cube
-         output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
+        output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
+        start = time.time()
 
-         start = time.time()
+        logging.info('Fitting coordinates to cube')
+        try:
+            for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
+                output_gen.fit_coord_multidimensional(output_file, percentiles)
 
-         logging.info('Fitting coordinates to cube')
-         try:
-             for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
-                 output_gen.fit_coord_multidimensional(output_file, percentiles)
+        except Exception as e:
+            logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
 
-         except Exception as e:
-             logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
+        end = time.time()
+        logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
 
-         end = time.time()
-         logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
+
 if __name__ == '__main__':
     start_time = time.time() 
     main() 

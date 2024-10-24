@@ -36,7 +36,7 @@ class OutputGenerator():
         pass
 
 
-    def save_batch(self, batch_idx, coordinates, smiles_list, features):
+    def save_batch(self, batch_idx, coordinates, smiles_list, features, output_dir):
          """
          Save the batch output as CSV file
          """
@@ -45,9 +45,9 @@ class OutputGenerator():
          for i in range(len(coordinates[0])):
             batch_data[f'PCA_{i+1}'] = coordinates[:, i]
         
-            output_path = os.path.join(OUTPUT_FILE_PATH, f'output/batch_data_{batch_idx}.csv')  
+            output_path = os.path.join(output_dir, f'output/batch_data_{batch_idx}.csv')  
 
-            os.makedirs(os.path.join(OUTPUT_FILE_PATH, 'output'), exist_ok=True)
+            os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
 
             batch_data.to_csv(output_path, index=True)
 
