@@ -12,23 +12,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '1M_ZINC.csv')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '30M.cxsmiles')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/125M/')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/30M/')
 
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 110000
-
+CHUNKSIZE = 1_000_000
 
 # =======================
 # PCA Parameters
 # =======================
 
 # Number of components for PCA
-PCA_N_COMPONENTS = 3
+PCA_N_COMPONENTS = 4
 
 # PCA Batch Size (if using Incremental PCA)
 PCA_BATCH_SIZE = 10000
