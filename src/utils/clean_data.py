@@ -41,16 +41,15 @@ def clean_smiles_file(input_file, output_file, is_csv):
                     # Clean the SMILES string
                     cleaned_smiles = clean_smiles(smiles)
                     # Reconstruct the line with the cleaned SMILES
-                    cleaned_line = '\t'.join([cleaned_smiles] + parts[1:])
-                    outfile.write(cleaned_line)
+                    outfile.write(cleaned_smiles + '\n')
 
     print(f"Cleaning complete. Cleaned data saved to {output_file}.")
 
 
 if __name__ == "__main__":
     # Example usage
-    input_file = "data/125M.cxsmiles"  # Path to the original input file
-    output_file =  "data/cleaned_125M.cxsmiles"  # Path to the original input file
+    input_file = "data/650M.cxsmiles"  # Path to the original input file
+    output_file =  "data/cleaned_650M.cxsmiles" # Path to the new file
     is_csv = False  # Set to True if input is a CSV, False for TXT/CXSMILES
 
     clean_smiles_file(input_file, output_file, is_csv)
