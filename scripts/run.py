@@ -34,12 +34,18 @@ def parse_arguments():
     parser.add_argument('--resume', type=int, default=0, help="Resume from a specific chunk.")
     parser.add_argument('--load', type=int, default=1, choices=[0, 1],
                         help="Set to 1 for faster processing (more memory), or 0 for lower memory usage (slower). Default is 1.")
-
+    parser.add_argument('--fit', type=int, default=0, choices=[0, 1], 
+                        help="Set 1 to perform the fitting of coordinates within the range defined by the percentiles 0.01 and 99.99. Default is 0. Should only be used for small datasets as it increases computational time")
+    parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
     return parser.parse_args()
 
-def setup_logging(log_level):
-    logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
-    # logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
+def setup_logging(log_level, log_output):
+    if log_output == True:
+
+        logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, filename=LOG_FILE_PATH) # saving logs to file
+    
+    else: 
+        logging.basicConfig(level=getattr(logging, log_level.upper()), format=LOGGING_FORMAT, stream=sys.stderr)  # Direct logs to stderr (console)
     
     logging.info("Logging initialized")
 
@@ -73,7 +79,7 @@ def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
          # Save smiles and features in HDF5 format
         with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
             h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
-            h5f.create_dataset('features', data= np.array(features, dtype='S')) 
+            # h5f.create_dataset('features', data= np.array(features, dtype='S')) 
 
         del fingerprints, smiles_list, features 
         
@@ -91,7 +97,7 @@ def main():
     args = parse_arguments()
 
     # Set up logging based on the parsed arguments or config defaults
-    setup_logging(args.log_level)
+    setup_logging(args.log_level, args.log)
     
     logging.info(f"Processing file: {args.data_file}")
     logging.info(f"Output directory: {args.output_dir}")
@@ -169,54 +175,55 @@ def main():
             with h5py.File(feat_chunk_path, 'r') as h5f:
                 smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
                 # features = h5f['features'][:].astype(str)
+                features = []
 
-            # # Get coordinates in np.array(n_smiles, n_pca_dim)
             coordinates = ipca.transform(fingerprints)
-            # smiles_list = []
-            features = []
+            
+            if args.fit == 1:
 
-            # Update digest for every batch
-            # if coordinates.shape[1] >= 3:  # Ensure there are at least 3 components
-            # x_digest.batch_update(coordinates[:, 0])
-            # y_digest.batch_update(coordinates[:, 1])
-            # z_digest.batch_update(coordinates[:, 2])
+                # Update digest for every batch
+                x_digest.batch_update(coordinates[:, 0])
+                y_digest.batch_update(coordinates[:, 1])
+                z_digest.batch_update(coordinates[:, 2])
 
             # Output coordinates before clipping with Percentiles.
             output_gen.save_batch(idx, coordinates, smiles_list, features)
 
             del fingerprints, coordinates, smiles_list, features 
+            
+            # Delete intermediate files 
             os.remove(fp_chunk_path)
             os.remove(feat_chunk_path)
-            
+        
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
 
-    # # Get Percentiles
-    # try:
 
-    #     percentiles = get_percentiles(x_digest, y_digest, z_digest)
+    # Get Percentiles 
+    
+    if args.fit == 1:
+        try:
+         percentiles = get_percentiles(x_digest, y_digest, z_digest)
 
-    # except Exception as e:
-    # # Map PCA coordinates to the 20x10x5 3D-dimensional cube
-    #     logging.error(f"Error calculating percentiles: {e}", exc_info=True)
-    #     # Use default percentiles if calculation fails?
+        except Exception as e:
+         logging.error(f"Error calculating percentiles: {e}", exc_info=True)
+         # Use default percentiles if calculation fails?
 
-    # # Map PCA coordinates to the 20x10x5 3D-dimensional cube
-    # output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
+        #Map PCA coordinates to the 20x10x5 3D-dimensional cube
+         output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
 
-    # start = time.time()
+         start = time.time()
 
-    # logging.info('Fitting coordinates to cube')
-    # try:
-    #     for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
-    #         output_gen.fit_coord_multidimensional(output_file, percentiles)
+         logging.info('Fitting coordinates to cube')
+         try:
+             for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
+                 output_gen.fit_coord_multidimensional(output_file, percentiles)
 
-    # except Exception as e:
-    #     logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
+         except Exception as e:
+             logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
 
-    # end = time.time()
-    # logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
-
+         end = time.time()
+         logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
 if __name__ == '__main__':
     start_time = time.time() 
     main() 
