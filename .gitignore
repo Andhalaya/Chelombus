@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 config.py
 output.log
+notebooks/data_analysis.ipynb
