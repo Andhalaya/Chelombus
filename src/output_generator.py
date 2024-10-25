@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import pickle
 import os
 from config import OUTPUT_FILE_PATH, CHUNKSIZE
 
 def get_percentiles(x_digest, y_digest, z_digest):
+
     """
     Get percentiles for x, y, z dimensions.
     """
@@ -66,8 +68,7 @@ class OutputGenerator():
 
     def fit_coord_multidimensional(self, output:str , percentiles: list):
             """
-            Generalize fit_coordinates to handle more than 3 dimensions.
-            This function will handle any number of dimensions.
+            Generalize fit_coordinates that handles more than 3 dimensions.
 
             :param output: The CSV file containing the PCA coordinates.
             :param percentiles: A list of percentile ranges for each dimension.

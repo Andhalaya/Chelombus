@@ -8,7 +8,6 @@ import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from sklearn.decomposition import IncrementalPCA
-from tdigest import TDigest
 
 # Append the parent directory to sys.path to import modules from src
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -16,9 +15,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import configurations and modules
 from config import (DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE, PCA_N_COMPONENTS,
                     LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS)
-from src.data_handler import DataHandler, get_total_chunks
+from src.data_handler import DataHandler
 from src.fingerprint_calculator import FingerprintCalculator
-from src.output_generator import OutputGenerator, get_percentiles
+from src.output_generator import OutputGenerator 
+from src.dimensionality_reducer import DimensionalityReducer, get_percentiles
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process fingerprints with flexible options.")
@@ -110,10 +110,8 @@ def main():
     data_handler = DataHandler(args.data_file, args.chunksize)
     output_gen = OutputGenerator()
     fp_calculator = FingerprintCalculator()
-    x_digest = TDigest()
-    y_digest = TDigest()
-    z_digest = TDigest()
-
+    dim_reducer = DimensionalityReducer()
+       
     # Load data in chunks
     data_chunks, total_chunks = data_handler.load_data()
 
@@ -182,16 +180,12 @@ def main():
             # Output coordinates before clipping with Percentiles.
             output_gen.save_batch(idx, coordinates, smiles_list, features, args.output_dir)
 
- 
             if args.fit == 1:
+               digest_methods = dim_reducer.digest_generator(args.pca_components)
 
-                # Update digest for every batch
-                x_digest.batch_update(coordinates[:, 0])
-                y_digest.batch_update(coordinates[:, 1])
-                z_digest.batch_update(coordinates[:, 2])
-                
-                continue 
-        
+               for i in range(len(digest_methods)):
+                    digest_methods[i].batch_update(coordinates[:, i])
+
             # Free memory space
             del fingerprints, coordinates, smiles_list, features 
             
@@ -204,31 +198,32 @@ def main():
 
 
     # Get Percentiles 
-    
     if args.fit == 1:
         try:
-            percentiles = get_percentiles(x_digest, y_digest, z_digest)
+            steps_list= [32, 32, 32, 32] # Number of steps to divide each PCA Component
+            percentiles = get_percentiles(digest_methods, steps_list)
+            print(percentiles)
 
         except Exception as e:
             logging.error(f"Error calculating percentiles: {e}", exc_info=True)
             # Use default percentiles if calculation fails?
 
-        #Map PCA coordinates to the 20x10x5 3D-dimensional cube
-        output_gen.steps = [100, 50, 25]  # Number of steps to be taken on each dimension
+         # Map PCA coordinates to the 20x10x5 3D-dimensional cube
+        output_gen.steps = [32, 32, 32]  # Number of steps to be taken on each dimension
         start = time.time()
 
         logging.info('Fitting coordinates to cube')
         try:
-            for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
-                output_gen.fit_coord_multidimensional(output_file, percentiles)
+             for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
+                 output_gen.fit_coord_multidimensional(output_file, percentiles)
 
         except Exception as e:
-            logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
+             logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
 
         end = time.time()
         logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
 
-
+        
 if __name__ == '__main__':
     start_time = time.time() 
     main() 
