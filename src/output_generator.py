@@ -89,5 +89,4 @@ class OutputGenerator():
             
             output_path = os.path.join(OUTPUT_FILE_PATH, ('output/'+output))
 
-            df_output.to_csv(output_path, index=False)
-
+            df_output.to_csv(output_path, index=False)# Assuming percentiles is a dictionary with keys 'PCA_1', 'PCA_2', ..., mapping to sorted lists for each PCA column

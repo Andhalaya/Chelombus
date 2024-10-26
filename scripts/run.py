@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import configurations and modules
 from config import (DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE, PCA_N_COMPONENTS,
-                    LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS)
+                    LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS, STEPS_LIST)
 from src.data_handler import DataHandler
 from src.fingerprint_calculator import FingerprintCalculator
 from src.output_generator import OutputGenerator 
@@ -105,6 +105,8 @@ def main():
     logging.info(f"Number of PCA components: {args.pca_components}")
     logging.info(f"Using {args.n_jobs} CPU cores")
     logging.info(f"Load mode: {'High memory usage (fast)' if args.load == 1 else 'Low memory usage (slow)'}")
+    
+    assert args.pca_components == len(STEPS_LIST), "STEPS_LIST should be same lenght as number of PCA_COMPONENTS" 
 
     # Initialize classes
     data_handler = DataHandler(args.data_file, args.chunksize)
@@ -200,8 +202,7 @@ def main():
     # Get Percentiles 
     if args.fit == 1:
         try:
-            steps_list= [32, 32, 32, 32] # Number of steps to divide each PCA Component
-            percentiles = get_percentiles(digest_methods, steps_list)
+            percentiles = get_percentiles(digest_methods, STEPS_LIST)
             print(percentiles)
 
         except Exception as e:

@@ -5,7 +5,7 @@ import os
 from config import OUTPUT_FILE_PATH, CHUNKSIZE
 from tdigest import TDigest
 
-def get_percentiles(digestion_methods: list, steps_list: list):
+def get_percentiles(digestion_methods: list, steps_list: list) -> dict: 
     """
     Get percentiles for every PCA Component or dimension.
     :param digestion_methods: list with all the TDigest methods -should be 3 or 4- for each PCA Component or dimension
@@ -23,6 +23,7 @@ def get_percentiles(digestion_methods: list, steps_list: list):
     """
 
     percentiles_list = {} 
+
     for i in range(len(digestion_methods)):
                 percentiles_list[f'PCA_{i+1}'] = [digestion_methods[i].percentile(step) for step in np.arange(0, 100, (100/steps_list[i]))]
 
@@ -74,17 +75,14 @@ class DimensionalityReducer():
             else:
                 raise ValueError("PCA_N_COMPONENTS can only be 3 or 4")
 
-    def fit_coord_multidimensional(self, output:str , percentiles: list):
+    def fit_coord_multidimensional(self, output:str , percentiles: dict):
             """
             Generalize fit_coordinates to handle more than 3 dimensions.
             This function will handle any number of dimensions.
 
             :param output: The CSV file containing the PCA coordinates.
-            :param percentiles: A list of percentile ranges for each dimension.
-            :param grid: A list of steps for each dimension.
+            :param percentiles: A dict with list of percentile ranges for each dimension.
             """
-            if len(percentiles) != len(self.steps):
-                 raise ValueError("Percentiles and grid must have same number of dimensions")
             
             df_output = pd.read_csv(os.path.join(OUTPUT_FILE_PATH, ('output/'+output)))
 
@@ -99,4 +97,29 @@ class DimensionalityReducer():
             output_path = os.path.join(OUTPUT_FILE_PATH, ('output/'+output))
 
             df_output.to_csv(output_path, index=False)
+            
+    # Helper function to find the closest index
+    def find_closest_index(my_point, sorted_list):
+        """
+        Binary tree search to find the closest number in the list of percentiles -which is sorted-. 
+        This way we 'fit' to the grid. 
+        """
+        low, high = 0, len(sorted_list) - 1
+        
+        while low <= high:
+            mid = (low + high) // 2
+            if sorted_list[mid] == my_point:
+                return mid
+            elif sorted_list[mid] < my_point:
+                low = mid + 1
+            else:
+                high = mid - 1
 
+        # Determine the closest index
+        if low >= len(sorted_list):
+            return len(sorted_list) - 1
+        if high < 0:
+            return 0
+
+        return high if abs(sorted_list[high] - my_point) <= abs(sorted_list[low] - my_point) else low
+    
