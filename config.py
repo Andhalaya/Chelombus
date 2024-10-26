@@ -12,10 +12,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '30M.cxsmiles')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '1M.csv')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/30M/')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/1M/')
 
 # =======================
 # Loading parameters
@@ -27,10 +27,10 @@ CHUNKSIZE = 1_000_000
 # =======================
 
 # Number of components for PCA
-PCA_N_COMPONENTS = 4
+PCA_N_COMPONENTS = 3
 
-# PCA Batch Size (if using Incremental PCA)
-PCA_BATCH_SIZE = 10000
+# Number of steps to divide each dimension. len(STEPS_LIST) == len(PCA_N_COMPONENTS)
+STEPS_LIST = [32, 32, 32]
 
 # =======================
 # Logging Configuration
