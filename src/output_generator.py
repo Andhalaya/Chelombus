@@ -38,9 +38,11 @@ class OutputGenerator():
         pass
 
 
-    def save_batch(self, batch_idx, coordinates, smiles_list, features, output_dir):
+    def save_batch_csv(self, batch_idx, coordinates, smiles_list, features, output_dir):
          """
          Save the batch output as CSV file
+         This will generate a csv file for every batch. 
+         Not recommended for very large files as will increase I/O
          """
          batch_data = pd.DataFrame({'smiles': smiles_list})
 
@@ -53,6 +55,36 @@ class OutputGenerator():
 
             batch_data.to_csv(output_path, index=True)
 
+    def save_batch_parquet(self, coordinates: np.array, smiles_list:list, features:list, output_dir:str): 
+        """
+        Similar to save_batch_csv
+        This will instead save every batch -coordinates, smiles...- into a single parquet file 
+        by merging them every time a chunk is loaded. 
+        """
+        parquet_path= os.path.join(output_dir, 'output_dataframe.parquet')
+        os.makedirs(os.path.join(output_dir, 'output'), exist_ok= True)
+
+        # New dataframe for the chunk that is going to be concatenated to a single file 
+        batch_data = pd.DataFrame({'smiles': smiles_list})
+
+        # Append PCA coordinates
+        for i in range(len(coordinates[0])):
+           batch_data[f'PCA_{i+1}'] = coordinates[:, i]
+
+        # TODO: Add features to DataFrame using python dict instead of list. 
+        # for feature_name, feature_values in features.items():
+            #  batch_data[feature_name] = feature_values 
+
+        if os.path.exists(parquet_path):
+             # Load the existing Parquet file 
+             existing_parquet= pd.read_parquet(parquet_path)
+             # Append the new batch to the existing parquet file
+             concatenated_parquet= pd.concat([existing_parquet, batch_data], ignore_index=True) 
+        else: 
+             # If parquet file doesn't exit, batch is new 
+             concatenated_parquet = batch_data
+
+        concatenated_parquet.to_parquet(parquet_path, engine="pyarrow")
 
     def _round_to_step(self,coordinate:float, min_value:float, max_value:float, step_size:float):
            

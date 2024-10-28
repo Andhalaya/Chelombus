@@ -95,6 +95,11 @@ class DataHandler:
             """ 
             Method for extracting smiles and features in pandas. `data` object needs to be pd.DataFrame. 
             Not optimal for very large datasets? So far I've tried with 10M samples and performed well
+            input: 
+            param: data. pd.Dataframe, .txt or .cxsmiles file 
+            output:
+            smiles = np.array(batch_size,)
+            features = np.array(batch_size, features) 
             """
             try: 
                 data.columns = data.columns.str.lower() # for csv file
@@ -104,7 +109,7 @@ class DataHandler:
                     raise ValueError(f"No SMILES column found in {self.file_path}. Ensure there's a column named 'smiles'.")
                 
                 smiles_list = data[smiles_column]
-                features = data.drop(columns=[smiles_column])
+                features_list = data.drop(columns=[smiles_column])
             
             except: 
                 # for .txt or cxsmiles files
@@ -112,12 +117,12 @@ class DataHandler:
                  This part assumes that the 'smiles' columns in the txt or cxsmile files is in first position
                 """
                 smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
-                features = np.array(data)[:,1:]
+                features_list = np.array(data)[:,1:]
 
-                return smiles_list, features
+                # return smiles_list, features_list
  
             
-            return np.array(smiles_list), np.array(features)
+            return np.array(smiles_list), np.array(features_list)
     
     def one_hot_encode(self, features): 
         """ 
