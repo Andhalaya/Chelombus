@@ -117,19 +117,13 @@ def main():
     # Load data in chunks
     data_chunks, total_chunks = data_handler.load_data()
 
-    # Use generator or normal batch processing based on the `load` argument
-    if args.load == 0:
-        data_iterator = chunk_generator(data_chunks)
-    else:
-        data_iterator = data_chunks
-
     # Process chunks with tqdm progress bar
     start = time.time()
 
     # Process chunks in parallel using ProcessPoolExecutor
     with ProcessPoolExecutor(max_workers=args.n_jobs) as executor:
         futures = []
-        for idx, chunk in enumerate(tqdm(data_iterator, total=total_chunks, desc="Loading chunks and calculating fingerprints")):
+        for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Loading chunks and calculating fingerprints")):
             # Resume from a specific chunk if needed
             if idx < args.resume:
                 continue
@@ -155,6 +149,7 @@ def main():
                 fingerprints = h5f['fingerprints'][:]
 
             ipca.partial_fit(fingerprints)
+
             del fingerprints
 
         except Exception as e:
@@ -209,7 +204,7 @@ def main():
             logging.error(f"Error calculating percentiles: {e}", exc_info=True)
             # Use default percentiles if calculation fails?
 
-         # Map PCA coordinates to the 20x10x5 3D-dimensional cube
+         # Map PCA coordinates 
         output_gen.steps = [32, 32, 32]  # Number of steps to be taken on each dimension
         start = time.time()
 
