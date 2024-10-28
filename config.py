@@ -12,15 +12,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '1M.csv')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '30M.cxsmiles')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/1M/')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/30M/')
 
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 1_000_000
+CHUNKSIZE = 2_000_000
 
 # =======================
 # PCA Parameters
@@ -30,7 +30,7 @@ CHUNKSIZE = 1_000_000
 PCA_N_COMPONENTS = 3
 
 # Number of steps to divide each dimension. len(STEPS_LIST) == len(PCA_N_COMPONENTS)
-STEPS_LIST = [32, 32, 32]
+STEPS_LIST = [64, 32, 16]
 
 # =======================
 # Logging Configuration
