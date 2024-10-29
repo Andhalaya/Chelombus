@@ -7,6 +7,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import IncrementalPCA
 from src.utils.helper_functions import find_input_type
+from memory_profiler import profile
 import numpy as np
 import time
 import tqdm
@@ -142,6 +143,7 @@ class DataHandler:
         oh_features = one_hot_encoder.fit_transform(features)
         return oh_features
     
+    @profile
     def process_chunk(self, idx, chunk, fp_calculator, output_dir):
         """
         Process a single chunk of data by calculating fingerprints and saving them to a parquet file
@@ -174,20 +176,23 @@ class DataHandler:
     #           # h5f.create_dataset('features', data= np.array(features, dtype='S')) 
 
             # Create dataframe with smiles list
-            chunk_dataframe= pd.DataFrame({
+            smiles_dataframe= pd.DataFrame({
                 'smiles': smiles_list, 
             })
+            del smiles_list
 
             # Create dataframe with fingerprints values 
             fingerprint_df = pd.DataFrame(fingerprints.tolist(), columns = [f'fp_{i+1}' for i in range(42)])
+            del fingerprints
 
             # Concat both df. 
-            chunk_dataframe = pd.concat([chunk_dataframe, fingerprint_df], axis=1)
-            
+            chunk_dataframe = pd.concat([smiles_dataframe, fingerprint_df], axis=1)
+            del smiles_dataframe, fingerprint_df 
+
             # Save to parquet dataframe
             chunk_dataframe.to_parquet(fp_chunk_path, index=False)
 
-            del fingerprints, smiles_list, features 
+            del features, chunk_dataframe
             gc.collect() # Collect garbage. Not sure if it makes a difference but just in case
 
         except Exception as e:

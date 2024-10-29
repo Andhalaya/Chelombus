@@ -71,6 +71,40 @@ class OutputGenerator:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         batch_data.to_csv(output_path, index=False)
 
+
+    def batch_to_multiple_parquet(
+        self,
+        idx, 
+        coordinates: np.ndarray,
+        smiles_list: List[str],
+        features: Any,
+        output_dir: str
+    ) -> None:
+        """
+        Save each batch into a single Parquet file for every chunk loaded.
+
+        :param coordinates: NumPy array of coordinates.
+        :param smiles_list: List of SMILES strings.
+        :param features: Additional features (type unspecified).
+        :param output_dir: Directory to save the output files.
+        """
+        os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
+        parquet_path = os.path.join(output_dir, 'output', f'output_dataframe_{idx}.parquet')
+
+        # Create DataFrame for the current batch
+        batch_data = pd.DataFrame({'smiles': smiles_list})
+        del smiles_list
+
+        # Append PCA coordinates
+        for i in range(coordinates.shape[1]):
+            batch_data[f'PCA_{i+1}'] = coordinates[:, i]
+        del coordinates
+        
+        # TODO: Add features to DataFrame using 'features' parameter if needed.
+        batch_data.to_parquet(parquet_path, engine="pyarrow")
+
+        del batch_data 
+
     def batch_to_one_parquet(
         self,
         coordinates: np.ndarray,

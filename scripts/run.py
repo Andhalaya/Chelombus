@@ -8,6 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from sklearn.decomposition import IncrementalPCA
+from memory_profiler import profile
 import gc
 import pandas as pd
 
@@ -76,13 +77,6 @@ def main() -> None:
     # Load data in chunks
     data_chunks, total_chunks = data_handler.load_data()
 
-    # Use generator or normal batch processing based on the `load` argument
-    if args.load == 0:
-        # This doesn't make sense -> TODO: data_iterator = chunk_generator(data_chunks)
-        data_iterator = data_chunks 
-    else:
-        data_iterator = data_chunks
-
     # Process chunks with tqdm progress bar
     start = time.time()
 
@@ -94,7 +88,7 @@ def main() -> None:
         """
         with ProcessPoolExecutor(max_workers=args.n_jobs) as executor:
             futures = []
-            for idx, chunk in enumerate(tqdm(data_iterator, total=total_chunks, desc="Loading chunks")):
+            for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Loading chunks")):
                 # Resume from a specific chunk if needed
                 if idx < args.resume:
                     continue
@@ -116,7 +110,7 @@ def main() -> None:
        This will instead process each chunk at a time to ensure that the entire dataset is not loaded into memory
        You can use higher chunksize in this method
        """
-       for idx, chunk in enumerate(tqdm(data_iterator, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
+       for idx, chunk in enumerate(tqdm(data_chunks, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
            data_handler.process_chunk(idx, chunk, fp_calculator, args.output_dir)
            del idx, chunk
 
