@@ -34,7 +34,7 @@ def parse_arguments():
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Logging verbosity level.")
     parser.add_argument('--n-jobs', type=int, default=N_JOBS, help="Number of CPU cores to use.")
     parser.add_argument('--resume', type=int, default=0, help="Resume from a specific chunk.")
-    parser.add_argument('--load', type=int, default=1, choices=[0, 1],
+    parser.add_argument('--load', type=int, default=0, choices=[0, 1],
                         help="Set to 1 for faster processing (fitting entire data into memory), or 0 for lower memory usage (one chunk at a timer). Default is 1.")
     parser.add_argument('--fit', type=int, default=0, choices=[0, 1], 
                         help="Set 1 to perform the fitting of coordinates within the range defined by the percentiles 0.01 and 99.99. Default is 0. Should only be used for small datasets as it increases computational time")
@@ -51,64 +51,8 @@ def setup_logging(log_level, log_output):
     
     logging.info("Logging initialized")
 
-def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
-    """
-    Process a single chunk of data by calculating fingerprints and saving them.
-    """
-    try:
-        # Check if chunk already exists (HDF5 format)
-        # fp_chunk_path = os.path.join(output_dir, f'fp_chunks/fingerprints_chunk_{idx}.h5')
-        fp_chunk_path = os.path.join(output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
-        if os.path.exists(fp_chunk_path):
-            logging.info(f'Chunk {idx} already processed, skipping.')
-            return            
 
-        # Extract smiles and features from chunk
-        smiles_list, features = data_handler.extract_smiles_and_features(chunk)
-
-        # Calculate fingerprints
-        fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
- 
-        # Ensure output directories exist
-        os.makedirs(os.path.join(output_dir, 'fp_chunks'), exist_ok=True)
-        os.makedirs(os.path.join(output_dir, 'features_chunks'), exist_ok=True)
-        os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
-
-  #       #TODO: Add option to use .h5 files? .h5 files are too slow though...
-  #       # Save fingerprints in HDF5 format
-  #       with h5py.File(fp_chunk_path, 'w') as h5f:
-  #           h5f.create_dataset('fingerprints', data=fingerprints)
-
-  #        # Save smiles and features in HDF5 format
-  #       with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
-  #           h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
-  #           # h5f.create_dataset('features', data= np.array(features, dtype='S')) 
-
-        chunk_dataframe= pd.DataFrame({
-            'smiles': smiles_list, 
-        })
-        fingerprint_df = pd.DataFrame(fingerprints.tolist(), columns = [f'fp_{i+1}' for i in range(42)])
-
-        # Concat both df. 
-        chunk_dataframe = pd.concat([chunk_dataframe, fingerprint_df], axis=1)
-        
-        # Save to parquet dataframe
-        chunk_dataframe.to_parquet(fp_chunk_path, index=False)
-
-        del fingerprints, smiles_list, features 
-        gc.collect() # Collect garbage. Not sure if it makes a difference but just in case
-
-    except Exception as e:
-        logging.error(f"Error processing chunk {idx}: {e}", exc_info=True)
-
-def chunk_generator(data_chunks):
-    """
-    Generator to yield chunks one by one to minimize memory usage.
-    """
-    for chunk in data_chunks:
-        yield chunk
-
-def main():
+def main() -> None:
     args = parse_arguments()
 
     # Set up logging based on the parsed arguments or config defaults
@@ -154,7 +98,7 @@ def main():
                 # Resume from a specific chunk if needed
                 if idx < args.resume:
                     continue
-                futures.append(executor.submit(process_chunk, idx, chunk, data_handler, fp_calculator, args.output_dir))
+                futures.append(executor.submit(data_handler.process_chunk, idx, chunk, data_handler, fp_calculator, args.output_dir))
                 del idx, chunk
             # Wait for all futures to complete with error handling
 
@@ -173,7 +117,7 @@ def main():
        You can use higher chunksize in this method
        """
        for idx, chunk in enumerate(tqdm(data_iterator, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
-           process_chunk(idx, chunk, data_handler, fp_calculator, args.output_dir)
+           data_handler.process_chunk(idx, chunk, fp_calculator, args.output_dir)
            del idx, chunk
 
     end = time.time()    
@@ -181,9 +125,10 @@ def main():
  
     ipca = IncrementalPCA(n_components=args.pca_components)  # Dimensions to reduce to
 
+    # Incremental PCA fitting
     for idx in tqdm(range(args.resume, total_chunks), desc="Loading Fingerprints and iPCA partial fitting"):
         try:
-            fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
+            fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
             df_fingerprints = pd.read_parquet(fp_chunk_path, engine="pyarrow")
             
             data = df_fingerprints.drop(columns=['smiles']).values
@@ -201,13 +146,13 @@ def main():
     for idx in tqdm(range(args.resume, total_chunks), desc='iPCA transform and saving results'):
         try:
             # Load fingerprint
-            fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
+            fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
             df_fingerprints  =  pd.read_parquet(fp_chunk_path)
             features = []
-            coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # np.array shape (chunk_size, n_pca_comp)
+            coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # -> np.array shape (chunk_size, n_pca_comp)
 
             # Output coordinates into a parquet file.
-            output_gen.save_batch_parquet(coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
+            output_gen.batch_to_one_parquet(coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
 
             if args.fit == 1:
                digest_methods = dim_reducer.digest_generator(args.pca_components)
@@ -217,7 +162,8 @@ def main():
 
             # Free memory space
             del df_fingerprints, coordinates, features 
-            
+            os.remove(fp_chunk_path) 
+
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
 

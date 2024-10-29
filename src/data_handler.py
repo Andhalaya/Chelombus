@@ -148,7 +148,7 @@ class DataHandler:
         """
         try:
             # Check if chunk already exists
-            fp_chunk_path = os.path.join(output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
+            fp_chunk_path = os.path.join(output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
             if os.path.exists(fp_chunk_path):
                 logging.info(f'Chunk {idx} already processed, skipping.')
                 return            
