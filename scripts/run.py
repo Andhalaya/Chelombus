@@ -8,6 +8,9 @@ import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from sklearn.decomposition import IncrementalPCA
+from memory_profiler import profile
+import gc
+import pandas as pd
 
 # Append the parent directory to sys.path to import modules from src
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -32,8 +35,8 @@ def parse_arguments():
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Logging verbosity level.")
     parser.add_argument('--n-jobs', type=int, default=N_JOBS, help="Number of CPU cores to use.")
     parser.add_argument('--resume', type=int, default=0, help="Resume from a specific chunk.")
-    parser.add_argument('--load', type=int, default=1, choices=[0, 1],
-                        help="Set to 1 for faster processing (more memory), or 0 for lower memory usage (slower). Default is 1.")
+    parser.add_argument('--load', type=int, default=0, choices=[0, 1],
+                        help="Set to 1 for faster processing (fitting entire data into memory), or 0 for lower memory usage (one chunk at a timer). Default is 1.")
     parser.add_argument('--fit', type=int, default=0, choices=[0, 1], 
                         help="Set 1 to perform the fitting of coordinates within the range defined by the percentiles 0.01 and 99.99. Default is 0. Should only be used for small datasets as it increases computational time")
     parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
@@ -49,51 +52,8 @@ def setup_logging(log_level, log_output):
     
     logging.info("Logging initialized")
 
-def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
-    """
-    Process a single chunk of data by calculating fingerprints and saving them.
-    This function runs in parallel using ProcessPoolExecutor.
-    """
-    try:
-        # Check if chunk already exists (HDF5 format)
-        fp_chunk_path = os.path.join(output_dir, f'fp_chunks/fingerprints_chunk_{idx}.h5')
-        if os.path.exists(fp_chunk_path):
-            # logging.info(f'Chunk {idx} already processed, skipping.')
-            return
 
-        # Extract smiles and features from chunk
-        smiles_list, features = data_handler.extract_smiles_and_features(chunk)
-
-        # Calculate fingerprints
-        fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
-
-        # Ensure output directories exist
-        os.makedirs(os.path.join(output_dir, 'fp_chunks'), exist_ok=True)
-        os.makedirs(os.path.join(output_dir, 'features_chunks'), exist_ok=True)
-        os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
-
-        # Save fingerprints in HDF5 format
-        with h5py.File(fp_chunk_path, 'w') as h5f:
-            h5f.create_dataset('fingerprints', data=fingerprints)
-
-         # Save smiles and features in HDF5 format
-        with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
-            h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
-            # h5f.create_dataset('features', data= np.array(features, dtype='S')) 
-
-        del fingerprints, smiles_list, features 
-        
-    except Exception as e:
-        logging.error(f"Error processing chunk {idx}: {e}", exc_info=True)
-
-def chunk_generator(data_chunks):
-    """
-    Generator to yield chunks one by one to minimize memory usage.
-    """
-    for chunk in data_chunks:
-        yield chunk
-
-def main():
+def main() -> None:
     args = parse_arguments()
 
     # Set up logging based on the parsed arguments or config defaults
@@ -121,36 +81,55 @@ def main():
     start = time.time()
 
     # Process chunks in parallel using ProcessPoolExecutor
-    with ProcessPoolExecutor(max_workers=args.n_jobs) as executor:
-        futures = []
-        for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Loading chunks and calculating fingerprints")):
-            # Resume from a specific chunk if needed
-            if idx < args.resume:
-                continue
-            futures.append(executor.submit(process_chunk, idx, chunk, data_handler, fp_calculator, args.output_dir))
+    if args.load == 1:
+        """
+        This will process all chunks in parallel. It ensures fast fingerprint calculation at the cost of loading all data into memory
+        Use only if the whole dataset fits into memory. Otherwise, use sequential chunk calculation
+        """
+        with ProcessPoolExecutor(max_workers=args.n_jobs) as executor:
+            futures = []
+            for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Loading chunks")):
+                # Resume from a specific chunk if needed
+                if idx < args.resume:
+                    continue
+                futures.append(executor.submit(data_handler.process_chunk, idx, chunk, data_handler, fp_calculator, args.output_dir))
+                del idx, chunk
+            # Wait for all futures to complete with error handling
 
-        # Wait for all futures to complete with error handling
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Processing chunks"):
-            try:
-                future.result()  # Raises any exceptions from the workers
-            except Exception as e:
-                logging.error(f"Error in parallel processing: {e}", exc_info=True)
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Calculating fingerprints for all chunks"):
+                try:
+                    future.result()  # Raises any exceptions from the workers
+                except Exception as e:
+                    logging.error(f"Error in parallel processing: {e}", exc_info=True)
 
-    end = time.time()
+        # Ensure all process have completed before moving on with Loading Fingerprints and iPCA partial fitting
+        executor.shutdown(wait=True)
+
+    if args.load == 0:
+       """
+       This will instead process each chunk at a time to ensure that the entire dataset is not loaded into memory
+       You can use higher chunksize in this method
+       """
+       for idx, chunk in enumerate(tqdm(data_chunks, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
+           data_handler.process_chunk(idx, chunk, fp_calculator, args.output_dir)
+           del idx, chunk
+
+    end = time.time()    
     logging.info(f"Preprocessing of data took: {(end - start)/60:.2f} minutes")
-
-    # Partial fit using Incremental PCA
+ 
     ipca = IncrementalPCA(n_components=args.pca_components)  # Dimensions to reduce to
 
-    for idx in tqdm(range(args.resume, total_chunks), desc="Loading Fingerprints and fitting"):
+    # Incremental PCA fitting
+    for idx in tqdm(range(args.resume, total_chunks), desc="Loading Fingerprints and iPCA partial fitting"):
         try:
-            fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.h5')
-            with h5py.File(fp_chunk_path, 'r') as h5f:
-                fingerprints = h5f['fingerprints'][:]
+            fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
+            df_fingerprints = pd.read_parquet(fp_chunk_path, engine="pyarrow")
+            
+            data = df_fingerprints.drop(columns=['smiles']).values
+            ipca.partial_fit(data)
 
-            ipca.partial_fit(fingerprints)
-
-            del fingerprints
+            del df_fingerprints, data
+            gc.collect()
 
         except Exception as e:
             logging.error(f"Error during PCA fitting for chunk {idx}: {e}", exc_info=True)
@@ -158,24 +137,16 @@ def main():
     # Transform Data and Save results
     logging.info("Performing Dimensionality Reduction...")
 
-    for idx in tqdm(range(args.resume, total_chunks), desc='Transforming Data'):
+    for idx in tqdm(range(args.resume, total_chunks), desc='iPCA transform and saving results'):
         try:
             # Load fingerprint
-            fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.h5')
-            with h5py.File(fp_chunk_path, 'r') as h5f:
-                fingerprints = h5f['fingerprints'][:]
+            fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
+            df_fingerprints  =  pd.read_parquet(fp_chunk_path)
+            features = []
+            coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # -> np.array shape (chunk_size, n_pca_comp)
 
-            # Load smiles and features
-            feat_chunk_path = os.path.join(args.output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5')
-            with h5py.File(feat_chunk_path, 'r') as h5f:
-                smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
-                # features = h5f['features'][:].astype(str)
-                features = []
-
-            coordinates = ipca.transform(fingerprints)
-              
-            # Output coordinates before clipping with Percentiles.
-            output_gen.save_batch(idx, coordinates, smiles_list, features, args.output_dir)
+            # Output coordinates into a parquet file.
+            output_gen.batch_to_one_parquet(coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
 
             if args.fit == 1:
                digest_methods = dim_reducer.digest_generator(args.pca_components)
@@ -184,11 +155,8 @@ def main():
                     digest_methods[i].batch_update(coordinates[:, i])
 
             # Free memory space
-            del fingerprints, coordinates, smiles_list, features 
-            
-            # Delete intermediate files after loading them 
-            os.remove(fp_chunk_path)
-            os.remove(feat_chunk_path)
+            del df_fingerprints, coordinates, features 
+            os.remove(fp_chunk_path) 
 
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
