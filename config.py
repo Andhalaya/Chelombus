@@ -12,15 +12,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # =======================
 
 # Input data file path
-DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '30M.cxsmiles')
+DATA_FILE_PATH = os.path.join(BASE_DIR, 'data', '230M.cxsmiles')
 
 # Output data file path
-OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/30M/')
+OUTPUT_FILE_PATH = os.path.join(BASE_DIR, 'data/230M/')
 
 # =======================
 # Loading parameters
 # =======================
-CHUNKSIZE = 2_000_000
+CHUNKSIZE = 10_000_000
 
 # =======================
 # PCA Parameters

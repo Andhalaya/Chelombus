@@ -6,3 +6,5 @@ __pycache__/
 config.py
 output.log
 notebooks/data_analysis.ipynb
+config.py
+notebooks/exploratory_analysis.ipynb
