@@ -61,8 +61,8 @@ class OutputGenerator():
         This will instead save every batch -coordinates, smiles...- into a single parquet file 
         by merging them every time a chunk is loaded. 
         """
-        parquet_path= os.path.join(output_dir, 'output_dataframe.parquet')
         os.makedirs(os.path.join(output_dir, 'output'), exist_ok= True)
+        parquet_path= os.path.join(output_dir, 'output/output_dataframe.parquet')
 
         # New dataframe for the chunk that is going to be concatenated to a single file 
         batch_data = pd.DataFrame({'smiles': smiles_list})
@@ -80,11 +80,13 @@ class OutputGenerator():
              existing_parquet= pd.read_parquet(parquet_path)
              # Append the new batch to the existing parquet file
              concatenated_parquet= pd.concat([existing_parquet, batch_data], ignore_index=True) 
+             del existing_parquet
         else: 
              # If parquet file doesn't exit, batch is new 
              concatenated_parquet = batch_data
 
         concatenated_parquet.to_parquet(parquet_path, engine="pyarrow")
+        del concatenated_parquet, batch_data
 
     def _round_to_step(self,coordinate:float, min_value:float, max_value:float, step_size:float):
            

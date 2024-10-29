@@ -86,11 +86,13 @@ def process_chunk(idx, chunk, data_handler, fp_calculator, output_dir):
 
         chunk_dataframe= pd.DataFrame({
             'smiles': smiles_list, 
-            'fingerprint': fingerprints.tolist(), 
-            # 'features': features.tolist(), TODO: add feature support
         })
-   
-    
+        fingerprint_df = pd.DataFrame(fingerprints.tolist(), columns = [f'fp_{i+1}' for i in range(42)])
+
+        # Concat both df. 
+        chunk_dataframe = pd.concat([chunk_dataframe, fingerprint_df], axis=1)
+        
+        # Save to parquet dataframe
         chunk_dataframe.to_parquet(fp_chunk_path, index=False)
 
         del fingerprints, smiles_list, features 
@@ -181,15 +183,14 @@ def main():
 
     for idx in tqdm(range(args.resume, total_chunks), desc="Loading Fingerprints and iPCA partial fitting"):
         try:
-            # fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.h5')
             fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
-            # with h5py.File(fp_chunk_path, 'r') as h5f:
-            #     fingerprints = h5f['fingerprints'][:]
-            df_fingerprints = pd.read_parquet(fp_chunk_path)
+            df_fingerprints = pd.read_parquet(fp_chunk_path, engine="pyarrow")
             
-            ipca.partial_fit(df_fingerprints.drop(columns=['smiles']).values)
+            data = df_fingerprints.drop(columns=['smiles']).values
+            ipca.partial_fit(data)
 
-            del df_fingerprints
+            del df_fingerprints, data
+            gc.collect()
 
         except Exception as e:
             logging.error(f"Error during PCA fitting for chunk {idx}: {e}", exc_info=True)
@@ -202,21 +203,9 @@ def main():
             # Load fingerprint
             fp_chunk_path = os.path.join(args.output_dir, f'fp_chunks/fingerprints_chunk_{idx}.parquet')
             df_fingerprints  =  pd.read_parquet(fp_chunk_path)
-            # fingerprints = df_fingerprints.drop(columns=['smiles']).values
-            # smiles_list = df_fingerprints['smiles'].tolist()
-            
-            # with h5py.File(fp_chunk_path, 'r') as h5f:
-            #     fingerprints = h5f['fingerprints'][:]
             features = []
-            # Load smiles and features
-            # feat_chunk_path = os.path.join(args.output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5')
-            # with h5py.File(feat_chunk_path, 'r') as h5f:
-                # smiles_list = h5f['smiles_list'][:].astype(str)  # Convert from bytes to strings
-                # features = h5f['features'][:].astype(str)
-                # features = []
+            coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # np.array shape (chunk_size, n_pca_comp)
 
-            coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)
-             
             # Output coordinates into a parquet file.
             output_gen.save_batch_parquet(coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
 
@@ -229,10 +218,6 @@ def main():
             # Free memory space
             del df_fingerprints, coordinates, features 
             
-            # Delete intermediate files after loading them 
-            # os.remove(fp_chunk_path)
-            # os.remove(feat_chunk_path)
-
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
 
