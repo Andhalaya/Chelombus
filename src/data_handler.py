@@ -143,7 +143,7 @@ class DataHandler:
         oh_features = one_hot_encoder.fit_transform(features)
         return oh_features
     
-    @profile
+    # @profile
     def process_chunk(self, idx, chunk, fp_calculator, output_dir):
         """
         Process a single chunk of data by calculating fingerprints and saving them to a parquet file

@@ -146,7 +146,7 @@ def main() -> None:
             coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # -> np.array shape (chunk_size, n_pca_comp)
 
             # Output coordinates into a parquet file.
-            output_gen.batch_to_one_parquet(coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
+            output_gen.batch_to_multiple_parquet(idx, coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
 
             if args.fit == 1:
                digest_methods = dim_reducer.digest_generator(args.pca_components)
@@ -156,7 +156,7 @@ def main() -> None:
 
             # Free memory space
             del df_fingerprints, coordinates, features 
-            os.remove(fp_chunk_path) 
+            # os.remove(fp_chunk_path) 
 
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
