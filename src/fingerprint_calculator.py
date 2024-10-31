@@ -39,7 +39,7 @@ class FingerprintCalculator:
         Returns the correct function to calculate the fingerprints based on user selection
         """
         if self.fingerprint_type == 'mhfp':
-            pass
+            return self._calculate_mhfp_fp 
         elif self.fingerprint_type == 'mqn':
             return self._calculate_mqn_fp
         elif self.fingerprint_type == 'mapc':
@@ -50,3 +50,13 @@ class FingerprintCalculator:
         with Pool(processes=N_JOBS) as pool: 
             fingerprints = pool.map(fp_function, self.smiles_list)
         return np.array(fingerprints)
+
+"""
+Example of usage: 
+## Initiate 
+fp_calculator = FingerprintCalculator(your_dataframe['smiles'], 'mqn') --> This will calculate the MQN fingerprints. For example is used when running the clustering pipeline
+fp_calculator = FingerprintCalculator(smiles_list, 'mhfp', permutations=1024) --> This will calculate the MHFP with 1024 permutations (default is 512)
+
+## Calculate fingerprints
+fingerpints = fp_calculator.calculate_fingerprints() -> returns np.array witht the fp vectors of same length as smiles_list
+"""
