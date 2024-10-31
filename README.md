@@ -141,3 +141,13 @@ These visuals demonstrate that our approach has effectively created meaningful c
 ![text](images/cluster_visualizations/cluster_133.png)
 ![text](images/cluster_visualizations/cluster_26.png)
 
+## class FingerprintCalculator
+
+### Initiate 
+fp_calculator = FingerprintCalculator(your_dataframe['smiles'], 'mqn') --> This will calculate the MQN fingerprints. 
+For example, this way is used when running the clustering pipeline as it will only work with MQN fingerprints
+
+fp_calculator = FingerprintCalculator(smiles_list, 'mhfp', permutations=1024) --> This will calculate the MHFP with 1024 permutations (default is 512)
+
+### Calculate fingerprints
+fingerpints = fp_calculator.calculate_fingerprints() -> returns np.array witht the fp vectors of same length as smiles_list
