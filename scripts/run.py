@@ -71,7 +71,6 @@ def main() -> None:
     # Initialize classes
     data_handler = DataHandler(args.data_file, args.chunksize)
     output_gen = OutputGenerator()
-    fp_calculator = FingerprintCalculator()
     dim_reducer = DimensionalityReducer()
        
     # Load data in chunks
@@ -92,7 +91,7 @@ def main() -> None:
                 # Resume from a specific chunk if needed
                 if idx < args.resume:
                     continue
-                futures.append(executor.submit(data_handler.process_chunk, idx, chunk, data_handler, fp_calculator, args.output_dir))
+                futures.append(executor.submit(data_handler.process_chunk, idx, chunk, data_handler,  args.output_dir))
                 del idx, chunk
             # Wait for all futures to complete with error handling
 
@@ -111,7 +110,7 @@ def main() -> None:
        You can use higher chunksize in this method
        """
        for idx, chunk in enumerate(tqdm(data_chunks, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
-           data_handler.process_chunk(idx, chunk, fp_calculator, args.output_dir)
+           data_handler.process_chunk(idx, chunk, args.output_dir)
            del idx, chunk
 
     end = time.time()    

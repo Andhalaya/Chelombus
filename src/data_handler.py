@@ -11,7 +11,8 @@ from memory_profiler import profile
 import numpy as np
 import time
 import tqdm
- 
+from src.fingerprint_calculator import FingerprintCalculator
+
 def get_total_chunks(file_path, chunksize):
     """ Calculate number of chunks based on self.chunksize for tqdm 
     Maybe avoid for files that are too large >150 GB? Takes about ~2 minutes for such size
@@ -144,7 +145,7 @@ class DataHandler:
         return oh_features
     
     # @profile
-    def process_chunk(self, idx, chunk, fp_calculator, output_dir):
+    def process_chunk(self, idx, chunk, output_dir):
         """
         Process a single chunk of data by calculating fingerprints and saving them to a parquet file
         """
@@ -158,8 +159,10 @@ class DataHandler:
             # Extract smiles and features from chunk
             smiles_list, features = self.extract_smiles_and_features(chunk)
 
+            fp_calculator = FingerprintCalculator(smiles_list, 'mqn')
+
             # Calculate fingerprints
-            fingerprints = fp_calculator.calculate_fingerprints(smiles_list)
+            fingerprints = fp_calculator.calculate_fingerprints()
     
             # Ensure output directories exist
             os.makedirs(os.path.join(output_dir, 'batch_parquet'), exist_ok=True)
