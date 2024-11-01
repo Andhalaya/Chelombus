@@ -19,15 +19,15 @@ from src.layout_computer import LayoutComputer
 from src.tmap_generator import TmapConstructor
 
 # Import configurations and modules
-from config import (DATA_FILE_PATH, OUTPUT_FILE_PATH, CHUNKSIZE, PCA_N_COMPONENTS,
-                    LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS, STEPS_LIST)
+from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process fingerprints with flexible options.")
     
     # Optional arguments to override config settings
-    parser.add_argument('--data-file', type=str, default=DATA_FILE_PATH, help="Input data file path.")
+    parser.add_argument('--data-file', type=str, default=INPUT_TMAP_PATH, help="Input data file path.")
     parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
+    parser.add_argument('--ouput-file', type=str, default=OUTPUT_TMAP_PATH, help='Output directory for TMAP files (i.e. HTML and .js)')
     return parser.parse_args()
 
 def setup_logging(log_level, log_output):
@@ -38,4 +38,12 @@ def setup_logging(log_level, log_output):
     logging.info("Logging initialized")
 
 def main() -> None:
-    pass
+   smiles_list = None 
+   fp_calculator = FingerprintCalculator(smiles_list, fingerprint_type='mhfp', fp_size=2048)
+   tmap_constructor = TmapConstructor() 
+
+   main_dataframe = pd.read_csv(INPUT_TMAP_PATH) 
+   
+   calculate_fingerprints = fp_calculator.calculate_fingerprints()
+   
+   
