@@ -8,9 +8,18 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolDescriptors                                                           
 import numpy as np
 import tmap as tm
+import hashlib 
+from mapchiral.mapchiral import encode as mapc_enc
 
 class FingerprintCalculator:
-    def __init__(self, smiles_list: list, fingerprint_type: str, permutations: Optional[int] = 512, fp_size: Optional[int] = 1024 ):
+    def __init__(
+            self,
+            smiles_list: list, 
+            fingerprint_type: str, 
+            permutations: Optional[int] = 512, 
+            fp_size: Optional[int] = 1024,
+            radius: Optional[int] = 2):
+        self.radius = radius
         self.smiles_list = smiles_list
         self.fingerprint_type = fingerprint_type.lower()
         self.permutations = permutations
@@ -19,7 +28,8 @@ class FingerprintCalculator:
     def _calculate_mhfp_fp(self, smiles: str) -> np.array:
         """Calculate MHFP for a single SMILES string"""
         encoder = MHFPEncoder(self.permutations) 
-        return tm.VectorUint(encoder.encode(smiles))
+        #TODO: Fix error. Can't picke tmap.VectorUint objects.
+        return np.array(encoder.encode(smiles))
          
     def _calculate_mqn_fp(self, smiles: str) -> np.array: 
         """Calculate fp for a single SMILES string"""
@@ -31,7 +41,7 @@ class FingerprintCalculator:
             print(f"error processing SMILES '{smiles}: {e}")
             return None   
             
-    def _calculate_mhfp_fp(self, smiles: str, radius: int = 2, nBits: int = 2048) -> np.array:
+    def _calculate_morgan_fp(self, smiles: str) -> np.array:
         """
         Calculate Morgan-Hashed Fingerprint (MHFP) for a single SMILES string.
 
@@ -49,54 +59,26 @@ class FingerprintCalculator:
                 raise ValueError("Invalid SMILES string.")
 
             # Generate standard Morgan fingerprint
-            morgan_fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=radius, nBits=nBits)
+            morgan_fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=self.radius, nBits=self.fp_size)
 
             # Convert to bit string
             bit_string = morgan_fp.ToBitString()
 
             # Hash the bit string using SHA256 and truncate to nBits
             hash_obj = hashlib.sha256(bit_string.encode())
-            hashed_bits = bin(int(hash_obj.hexdigest(), 16))[2:].zfill(256)[:nBits]
+            hashed_bits = bin(int(hash_obj.hexdigest(), 16))[2:].zfill(256)[:self.fp_size]
 
             # Convert hashed bits to numpy array
             fingerprint = np.array([int(bit) for bit in hashed_bits], dtype=np.int8)
-
             return fingerprint
-        except Exception as e:
-            print(f"Error processing SMILES '{smiles}': {e}")
-            return None
-
-    def _calculate_morgan_fp(self, smiles: str, radius: int = 2, nBits: int = 2048) -> np.array:
-        """
-        Calculate Morgan Fingerprint for a single SMILES string.
-
-        Args:
-            smiles (str): SMILES representation of the molecule.
-            radius (int): Radius for Morgan fingerprint.
-            nBits (int): Number of bits in the fingerprint.
-
-        Returns:
-            np.array: Morgan fingerprint as a numpy array.
-        """
-        try:
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
-                raise ValueError("Invalid SMILES string.")
-
-            # Generate Morgan fingerprint
-            morgan_fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=radius, nBits=nBits)
-
-            # Convert RDKit ExplicitBitVect to numpy array
-            fingerprint = np.array(morgan_fp)
-
-            return fingerprint
+        
         except Exception as e:
             print(f"Error processing SMILES '{smiles}': {e}")
             return None
 
     def _calculate_mapc_fp(self, smiles: str) -> np.array:
         """Calculate MAP chiral fingerprints for a single SMILES string"""
-        pass 
+        return np.array(mapc_enc(Chem.MolFromSmiles(smiles), max_radius=self.radius, n_permutations=self.fp_size, mapping=False))
         
     def _fp_method(self):
         """
@@ -108,10 +90,13 @@ class FingerprintCalculator:
             return self._calculate_mqn_fp
         elif self.fingerprint_type == 'mapc':
             return self._calculate_mapc_fp
-                    
+        elif self.fingerprint_type == 'morgan':
+            return self._calculate_morgan_fp                
+    
     def calculate_fingerprints(self) -> np.array:
         with Pool(processes=N_JOBS) as pool: 
-            fingerprints = pool.map(self._fp_method, self.smiles_list)
+            fingerprints = pool.map(self._fp_method(), self.smiles_list)
+
         return np.array(fingerprints)
 
 """

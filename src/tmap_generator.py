@@ -11,8 +11,8 @@ from src.fingerprint_calculator import FingerprintCalculator
 from src.layout_computer import LayoutComputer, Plotter
 import tmap as tm
 import logging
-
-class TmapConstructor: # Class to generate physicochemical properties from smiles 
+ # Class to generate physicochemical properties from smiles 
+class TmapConstructor:
     def __init__(self, dataframe):
         self.dataframe = dataframe
 
@@ -43,7 +43,7 @@ class TmapConstructor: # Class to generate physicochemical properties from smile
    
     def mol_properties_from_df(self): # -> list[list[float]]:
         self.dataframe[['hac', 'frac_aromatic', 'num_rings', 'clogp', 'frac_csp3']]  = self.dataframe['smiles'].apply(
-            self._get_mol_properties
+            self._mol_properties_from_smiles
         ).apply(pd.Series)
 
         # Drop rows with any None or NaN values in the property columns
@@ -78,7 +78,8 @@ class TmapConstructor: # Class to generate physicochemical properties from smile
  
 class TmapGenerator:
     def __init__(
-            self, 
+            self,
+            dataframe: pd.DataFrame,  
             fingerprint_type: str = 'mhfp', 
             permutations: Optional[int]=512, 
             method: Optional[str]='lsh', 
@@ -103,13 +104,13 @@ class TmapGenerator:
         self.output_name = output_name
         self.categ_cols = categ_cols 
         # TODO: Think how to pass the correct dataframe
-        self._dataframe = None
+        self.dataframe = dataframe 
         
         # Initialize helper classes
-        self.fingerprint_calculator = FingerprintCalculator(self._dataframe['smiles'], self.fingerprint_type, permutations=self.permutations)
+        self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations)
         self.layout_computer = LayoutComputer(self.method, config=None)
         self.plotter = Plotter(self.output_name, self.categ_cols)
-        self.tmap_constructor = TmapConstructor()
+        self.tmap_constructor = TmapConstructor(self.dataframe)
 
         #TODO: Is this necessary? I could just create a new instance of the class and treat as just any other TMAP passing 'cluster_id' as label'
         self.representatives_dataframe_file_path = os.path.join(OUTPUT_FILE_PATH, 'cluster_representatives.csv')
@@ -142,8 +143,8 @@ class TmapGenerator:
             self._get_pca_vectors()
         self.label = 'cluster_id'
 
-    def construct_lsh_forest(self):
-        fingerprints = self._get_fingerprint_vectors()
+    def construct_lsh_forest(self) -> None:
+        fingerprints = self.fingerprint_calculator.calculate_fingerprints() 
         tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints] #TMAP requires fingerprints to be passed as VectorUint
 
         lf = tm.LSHForest(512, 128, store=True)
@@ -157,8 +158,8 @@ class TmapGenerator:
         cfg.k = TMAP_K
         cfg.sl_scaling_type = tm.RelativeToAvgLength
         
-        self.x, self.y, self.s, self.t = tm.layout_from_lsh_forest(lf, cfg)
-
+        logging.info("Layout")
+        self.x, self.y, self.s, self.t, _ = tm.layout_from_lsh_forest(lf, cfg)
 
     def plot_faerun(self):
         self.construct_lsh_forest() 
