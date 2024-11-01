@@ -3,6 +3,8 @@ from typing import Optional
 from config import N_JOBS
 from rdkit import Chem
 from mhfp.encoder import MHFPEncoder
+from rdkit import Chem
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolDescriptors                                                           
 import numpy as np
 import tmap as tm
@@ -27,8 +29,71 @@ class FingerprintCalculator:
         
         except Exception as e: 
             print(f"error processing SMILES '{smiles}: {e}")
-            return None
+            return None   
             
+    def _calculate_mhfp_fp(self, smiles: str, radius: int = 2, nBits: int = 2048) -> np.array:
+        """
+        Calculate Morgan-Hashed Fingerprint (MHFP) for a single SMILES string.
+
+        Args:
+            smiles (str): SMILES representation of the molecule.
+            radius (int): Radius for Morgan fingerprint.
+            nBits (int): Number of bits in the fingerprint.
+
+        Returns:
+            np.array: MHFP as a numpy array.
+        """
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                raise ValueError("Invalid SMILES string.")
+
+            # Generate standard Morgan fingerprint
+            morgan_fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=radius, nBits=nBits)
+
+            # Convert to bit string
+            bit_string = morgan_fp.ToBitString()
+
+            # Hash the bit string using SHA256 and truncate to nBits
+            hash_obj = hashlib.sha256(bit_string.encode())
+            hashed_bits = bin(int(hash_obj.hexdigest(), 16))[2:].zfill(256)[:nBits]
+
+            # Convert hashed bits to numpy array
+            fingerprint = np.array([int(bit) for bit in hashed_bits], dtype=np.int8)
+
+            return fingerprint
+        except Exception as e:
+            print(f"Error processing SMILES '{smiles}': {e}")
+            return None
+
+    def _calculate_morgan_fp(self, smiles: str, radius: int = 2, nBits: int = 2048) -> np.array:
+        """
+        Calculate Morgan Fingerprint for a single SMILES string.
+
+        Args:
+            smiles (str): SMILES representation of the molecule.
+            radius (int): Radius for Morgan fingerprint.
+            nBits (int): Number of bits in the fingerprint.
+
+        Returns:
+            np.array: Morgan fingerprint as a numpy array.
+        """
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                raise ValueError("Invalid SMILES string.")
+
+            # Generate Morgan fingerprint
+            morgan_fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=radius, nBits=nBits)
+
+            # Convert RDKit ExplicitBitVect to numpy array
+            fingerprint = np.array(morgan_fp)
+
+            return fingerprint
+        except Exception as e:
+            print(f"Error processing SMILES '{smiles}': {e}")
+            return None
+
     def _calculate_mapc_fp(self, smiles: str) -> np.array:
         """Calculate MAP chiral fingerprints for a single SMILES string"""
         pass 
@@ -45,9 +110,8 @@ class FingerprintCalculator:
             return self._calculate_mapc_fp
                     
     def calculate_fingerprints(self) -> np.array:
-        fp_function = self._fp_method()
         with Pool(processes=N_JOBS) as pool: 
-            fingerprints = pool.map(fp_function, self.smiles_list)
+            fingerprints = pool.map(self._fp_method, self.smiles_list)
         return np.array(fingerprints)
 
 """
