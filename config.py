@@ -68,3 +68,13 @@ RANDOM_STATE = 42
 INPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M','cluster_representatives.csv')
 
 OUTPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M/', 'maps/')
+
+
+# =======================
+# Layout Configuration
+# =======================
+
+TMAP_NODE_SIZE = 1/20
+
+TMAP_POINT_SCALE = 4.0
+TMAP_K = 20 # Number of neighbors 
