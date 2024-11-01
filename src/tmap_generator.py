@@ -9,14 +9,25 @@ from faerun import Faerun
 from config import OUTPUT_FILE_PATH
 from fingerprint_calculator import FingerprintCalculator
 from layout_computer import LayoutComputer, Plotter
+import tmap as tm
 
 class TmapConstructor: # Class to generate physicochemical properties from smiles 
-    """
-    properties: """
-    def __init__(self, properties:tuple):
-        pass
+    def __init__(self, dataframe):
+        self.dataframe = dataframe
 
-    def get_mol_properties(self, smiles):
+    def _calculate_threshold(self, data):
+        """ 
+        Typically we could have very different values in the molecular properties (e.g. number of rings on a very diverse dataframe)
+        which leads to lose of information due to outliers having extreme color values and the rest falling into the same range. 
+        This function calculates a threshold using IQR method to cut the outliers value based on percentiles.
+        """
+        q1, q3 = np.percentile(data, [25, 75])
+        iqr = q3 - q1 
+        threshold = q3 + 1.5*iqr
+        return threshold
+
+    def _mol_properties_from_smiles(self, smiles: str) -> tuple:
+        """ Get molecular properties from a single SMILES string"""
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
@@ -28,73 +39,167 @@ class TmapConstructor: # Class to generate physicochemical properties from smile
         fraction_Csp3 = Descriptors.FractionCSP3(mol)
         
         return (hac, fraction_aromatic_atoms, number_of_rings, clogP, fraction_Csp3)
+   
+    def mol_properties_from_df(self) -> list[list[float]]:
+        self.dataframe[['hac', 'frac_aromatic', 'num_rings', 'clogp', 'frac_csp3']]  = self.dataframe['smiles'].apply(
+            self._get_mol_properties
+        ).apply(pd.Series)
 
-
+        # Drop rows with any None or NaN values in the property columns
+        df_clean = self.dataframe.dropna(subset=['hac', 'frac_aromatic', 'num_rings', 'clogp', 'frac_csp3'])
+    
+        # Calculate thresholds for each property using the clean DataFrame
+        hac_threshold = self._calculate_threshold(df_clean['hac'])
+        frac_threshold= self._calculate_threshold(df_clean['frac_aromatic'])
+        rings_threshold=self._calculate_threshold(df_clean['num_rings'])
+        clogp_threshold=self._calculate_threshold(df_clean['clogp'])
+        csp3_threshold =self._calculate_threshold(df_clean['frac_csp3'])
+    
+        # Filter the DataFrame based on the thresholds
+        filtered_df = df_clean[
+            (df_clean['hac'] <= hac_threshold) &
+            (df_clean['frac_aromatic'] <= frac_threshold) &
+            (df_clean['num_rings'] <= rings_threshold) &
+            (df_clean['clogp'] <= clogp_threshold) &
+            (df_clean['frac_csp3'] <= csp3_threshold)
+        ]
+    
+        # Extract filtered properties as lists
+        filtered_hac = filtered_df['hac'].tolist()
+        filtered_frac_aromatic = filtered_df['frac_aromatic'].tolist()
+        filtered_num_rings = filtered_df['num_rings'].tolist()
+        filtered_clogp = filtered_df['clogp'].tolist()
+        filtered_frac_csp3 = filtered_df['frac_csp3'].tolist()
+    
+        # Return the list of lists
+        return [filtered_hac, filtered_frac_aromatic, filtered_num_rings, filtered_clogp, filtered_frac_csp3]
+    
+ 
 class TmapGenerator:
     def __init__(
             self, 
             fingerprint_type: str = 'mhfp', 
-            permutations: int=512, 
-            method: str='lsh', 
+            permutations: Optional[int]=512, 
+            method: Optional[str]='lsh', 
             output_name: str = 'tmap', 
-            labels: list =None, 
-            vector_type: str = 'fingerprint', 
-            cluster_id: Optional[str] = None):
+            categ_cols: list = None): 
         """
-        type_vector: Select whether you want the fingerprints or the PCA coordinates to be used in the first TMAP
-        cluster_id (Optional) Find the cluster_id which TMAP we will do. It has to be in format PCA1_PCA2_PCA3. 
-        e.g. 0_12_10. Right now it finds the csv file with this label. In the future it will retrieve it from the database
+        param: fingerprint_type : Type of molecular fingerprint to be used on the TMAP. Options: {'mhfp', 'mqn', 'morgan', 'mapc'
+        param: permutations: On MHFP number of permutations to be used in the MinHash
+
+        TODO: Is KNN necessary? 
+        param: method: Type of method to be used in TMAP. It can be either LSH (normal TMAP) or KNN? We could just create the TMAP always with LSH....
+        
+        param: output_name: name for the TMAP files. In case of the dynamic TMAP should inherit name from the cluster_id 
+        param: categ_cols: List with the column names in the dataframe to be included as labels in the TMAP. These are typically your categorical columns
+        e.g. 'Target_type', 'Organism' ...  
         """
+
 
         self.fingerprint_type = fingerprint_type
         self.permutations = permutations
         self.method = method
         self.output_name = output_name
-        self.labels = labels
-        self.vector_type= vector_type 
-        self._cluster_id = cluster_id
+        self.categ_cols = categ_cols 
         # TODO: Think how to pass the correct dataframe
         self._dataframe = None
         
         # Initialize helper classes
         self.fingerprint_calculator = FingerprintCalculator(self._dataframe['smiles'], self.fingerprint_type, permutations=self.permutations)
         self.layout_computer = LayoutComputer(self.method, config=None)
-        self.plotter = Plotter(self.output_name, self.labels)
-
-
+        self.plotter = Plotter(self.output_name, self.categ_cols)
+        self.tmap_constructor = TmapConstructor()
 
         self.representatives_dataframe_file_path = os.path.join(OUTPUT_FILE_PATH, 'cluster_representatives.csv')
         self._representatives_dataframe = pd.read_csv(self.representatives_dataframe_file_path)
         
 
-    def _get_fingerprint_vectors(self, encoder:str):
+    def _get_fingerprint_vectors(self):
         """
         The vectors used for the TMAP layout will be the fingerprints calcualted from the SMILES
         """
-        fp_calculator = FingerprintCalculator()  
-
-
-    def _get_pca_vectors(self):
         pass
 
 
-    def generate_representatives_tmap(self):
+    def _get_pca_vectors(self):
         """
-        The vectors used for the TMAP layout will be the PCA values calculated previously
-        To be used in the first TMAP (i.e. TMAPs of clusters using representatives as the nodes)
+        The vectors used for the TMAP layout will be the PCA Components. Typically to be used for the representatives cluster TMAP
         """
-        if self.type_vector == 'fingerprint':
-            self.get_fingerprint_vectors
+        #TODO: Get 3D Coordinates from self.representative_dataframe
+        # Then use those as vectors for the TMAP. Not sure if worth it. Check with JL
 
-        elif self.type_vector == 'coordinates':
-            self.get_pca_vectors
+    def generate_representatives_tmap(self, type_vector: str='fingerprint'):
+        """
+        Hierarchical TMAP of the clusters. Each point/node in the TMAP is a representative molecule of the cluster. 
+        The vectors used for the TMAP layout will be either the 'fingerprint' of the representative molecule 
+        or the PCA values (3D Coordinates). Default is 'fingerprint' 
+        """
+        if type_vector == 'fingerprint':
+            self._get_fingerprint_vectors()
+        elif type_vector == 'coordinates':
+            self._get_pca_vectors()
+        self.label = 'cluster_id'
 
-    def plot_farun(self):
+    def construct_lsh_forest(self):
+        lf = tm.LSHForest(512, 128, store=True)
+        fingerprints = self._get_fingerprint_vectors()
+        tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints]
+
+
+
+
+    def plot_faerun(self):
         f = Faerun(view="front", 
                     coords=False, 
                     title= "Representatives Cluster", 
                     clear_color="#FFFFFF")
+
+        # Create categories
+        labels = []
+        for i, row in self._dataframe.iterrows():
+            label = '__'.join(str(row[col]) for col in self.labels)
+            labels.append(label)
+        
+        properties = self.tmap_constructor.mol_properties_from_df() 
+
+        # Categorical = [True] * categorical_columns + [False]*numerical_columns 
+        numerical_col= [False]*5 # These are 5 by default. 5 molecular properties 
+        categorical_col = [True]*len(self.categ_cols)
+        bool_categorical = numerical_col + categorical_col
+
+        colormap = ['tab10' if value else 'viridis' for value in bool_categorical]
+
+        series_title = self.categ_cols + ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3']
+        
+        f.add_scatter(
+            "mapc_targets", 
+            {
+                "x": x, 
+                "y": y, 
+                "c": properties, 
+                "labels": labels, 
+            }, 
+        shader="smoothCircle",
+        point_scale=4.0,
+        max_point_size=20,
+        interactive=True,
+        legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
+        categorical= bool_categorical, 
+        colormap= colormap, 
+        series_title= series_title, 
+        has_legend=True,
+        )
+
+        # Add tree
+        f.add_tree("mapc_targets_tree", {"from": s, "to": t}, point_helper="mapc_targets", color="#222222")
+        
+        # Plot
+        f.plot('mapc_targets', template='smiles')
+
     def generate_cluster_tmap(self):
         """
         Generate the TMAP 'on the fly' based on the cluster_id given. It will look for the csv file for now but the idea is to retrieve from database
-        """ 
+        cluster_id (str int_int_int) Find the cluster_id which TMAP we will do. It has to be in format PCA1_PCA2_PCA3. 
+        e.g. 0_12_10. Right now it finds the csv file with this label. In the future it will retrieve it from the database
+        """
+        pass
