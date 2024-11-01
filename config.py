@@ -1,7 +1,7 @@
 import os
 
 # =======================
-# General Configuration
+# CLUSTER Configuration
 # =======================
 
 # Base directory of the project
@@ -55,3 +55,16 @@ N_JOBS = os.cpu_count()  # Uses all available cores
 
 # Random seed for reproducibility
 RANDOM_STATE = 42
+
+
+# =======================
+# TMAP Configuration
+# =======================
+
+# =======================
+# File Paths
+# =======================
+
+INPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M','cluster_representatives.csv')
+
+OUTPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M/', 'maps/')
