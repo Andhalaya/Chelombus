@@ -6,10 +6,11 @@ from typing import Optional
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
 from faerun import Faerun
-from config import OUTPUT_FILE_PATH
-from fingerprint_calculator import FingerprintCalculator
-from layout_computer import LayoutComputer, Plotter
+from config import OUTPUT_FILE_PATH, TMAP_NODE_SIZE, TMAP_K, TMAP_POINT_SCALE
+from src.fingerprint_calculator import FingerprintCalculator
+from src.layout_computer import LayoutComputer, Plotter
 import tmap as tm
+import logging
 
 class TmapConstructor: # Class to generate physicochemical properties from smiles 
     def __init__(self, dataframe):
@@ -40,7 +41,7 @@ class TmapConstructor: # Class to generate physicochemical properties from smile
         
         return (hac, fraction_aromatic_atoms, number_of_rings, clogP, fraction_Csp3)
    
-    def mol_properties_from_df(self) -> list[list[float]]:
+    def mol_properties_from_df(self): # -> list[list[float]]:
         self.dataframe[['hac', 'frac_aromatic', 'num_rings', 'clogp', 'frac_csp3']]  = self.dataframe['smiles'].apply(
             self._get_mol_properties
         ).apply(pd.Series)
@@ -110,6 +111,7 @@ class TmapGenerator:
         self.plotter = Plotter(self.output_name, self.categ_cols)
         self.tmap_constructor = TmapConstructor()
 
+        #TODO: Is this necessary? I could just create a new instance of the class and treat as just any other TMAP passing 'cluster_id' as label'
         self.representatives_dataframe_file_path = os.path.join(OUTPUT_FILE_PATH, 'cluster_representatives.csv')
         self._representatives_dataframe = pd.read_csv(self.representatives_dataframe_file_path)
         
@@ -141,14 +143,25 @@ class TmapGenerator:
         self.label = 'cluster_id'
 
     def construct_lsh_forest(self):
-        lf = tm.LSHForest(512, 128, store=True)
         fingerprints = self._get_fingerprint_vectors()
-        tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints]
+        tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints] #TMAP requires fingerprints to be passed as VectorUint
 
+        lf = tm.LSHForest(512, 128, store=True)
+        lf.batch_add(tm_fingerprints)
+        lf.index()
 
+        cfg = tm.LayoutConfiguration()
+        cfg.node_size = TMAP_NODE_SIZE
+        cfg.mmm_repeats = 2
+        cfg.sl_extra_scaling_steps = 10
+        cfg.k = TMAP_K
+        cfg.sl_scaling_type = tm.RelativeToAvgLength
+        
+        self.x, self.y, self.s, self.t = tm.layout_from_lsh_forest(lf, cfg)
 
 
     def plot_faerun(self):
+        self.construct_lsh_forest() 
         f = Faerun(view="front", 
                     coords=False, 
                     title= "Representatives Cluster", 
@@ -174,13 +187,13 @@ class TmapGenerator:
         f.add_scatter(
             "mapc_targets", 
             {
-                "x": x, 
-                "y": y, 
+                "x": self.x, 
+                "y": self.y, 
                 "c": properties, 
                 "labels": labels, 
             }, 
         shader="smoothCircle",
-        point_scale=4.0,
+        point_scale= TMAP_POINT_SCALE,
         max_point_size=20,
         interactive=True,
         legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
@@ -191,7 +204,7 @@ class TmapGenerator:
         )
 
         # Add tree
-        f.add_tree("mapc_targets_tree", {"from": s, "to": t}, point_helper="mapc_targets", color="#222222")
+        f.add_tree("mapc_targets_tree", {"from": self.s, "to": self.t}, point_helper="mapc_targets", color="#222222")
         
         # Plot
         f.plot('mapc_targets', template='smiles')
