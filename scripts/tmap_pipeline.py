@@ -1,5 +1,6 @@
 # File to run the Clustering pipeline
 import os
+import re 
 import sys
 import time
 import logging 
@@ -17,16 +18,15 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import configurations and modules
-from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH,
+from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH, CLUSTER_DATA_PATH, 
                     LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS, TMAP_K, TMAP_NAME)
-from src.data_handler import DataHandler
-from src.fingerprint_calculator import FingerprintCalculator
-from src.tmap_generator import TmapConstructor, TmapGenerator
+from src.tmap_generator import TmapGenerator
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process fingerprints with flexible options.")
     
     # Optional arguments to override config settings
+    parser.add_argument('--l', type=str, help="Choose whether you want to see the primary TMAP (cluster representatives) or a secondary TMAP (indicated by cluster_id = int_int_int")
     parser.add_argument('--data-file', type=str, default=INPUT_TMAP_PATH, help="Input data file path.")
     parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
     parser.add_argument('--log-level', type=str, default=LOGGING_LEVEL,
@@ -50,17 +50,36 @@ def main() -> None:
     # Set up logging based on the parsed arugments or config defaults
     setup_logging(args.log_level, args.log)
 
-    tmap_generator = TmapGenerator(INPUT_TMAP_PATH, fingerprint_type=args.fp,categ_cols=['cluster_id'], output_name=args.tmap_name)
-
     logging.info(f"Processing file: {args.data_file}")  
     logging.info(f"Output directory: {args.output_dir}")
     logging.info(f"Using K={TMAP_K} (number of neighbors)")
     logging.info(f"Using {args.n_jobs} CPU cores") 
 
-    # This line of code generates a simple TMAP
-    # All configuration should be done passing the arguments either with config.py file or args.parser. 
-    tmap_generator.tmap_little()
-    
+    # Check for TMAP level
+    if not args.l:
+        raise ValueError("No TMAP level selected. With flag --l pass 'primary' for a primary TMAP or provide a cluster_id in the format 'int_int_int' for a secondary TMAP")
+
+    if args.l == 'primary':
+        # This line of code generates a simple TMAP
+        # All configuration should be done passing the arguments either with config.py file or args.parser. 
+        # Generate representative cluster. 
+
+        tmap_generator = TmapGenerator(INPUT_TMAP_PATH, fingerprint_type=args.fp,categ_cols=['cluster_id'], output_name=args.tmap_name)
+        tmap_generator.tmap_little()
+
+    else:
+            # Validate secondary TMAP label format
+            if re.match(r"^\d+_\d+_\d+$", args.l):
+                # Secondary TMAP processing logic        
+                bin = args.l.split('_')[0]
+                cluster_path = os.path.join(CLUSTER_DATA_PATH, f'cluster{bin}.csv')
+
+                tmap_generator = TmapGenerator(cluster_path, fingerprint_type=args.fp)
+                tmap_generator.generate_cluster_tmap(args.l)
+            else:
+                logging.error("Invalid cluster_id format. Expected format: 'int_int_int' (e.g., 1_10_23 or 10_11_1)")
+                raise ValueError(f"Invalid cluster_id format. Please provide a cluster_id in the format 'int_int_int'. Instead got: {args.l}")
+
 
 if __name__ == "__main__":
     start_time = time.time()

@@ -71,6 +71,8 @@ INPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M','cluster_representatives.cs
 
 OUTPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M/', 'maps/')
 
+CLUSTER_DATA_PATH = os.path.join(BASE_DIR, 'data/230M/clustered_output/')
+
 # =======================
 # LSH Configuration
 # =======================
