@@ -61,6 +61,8 @@ RANDOM_STATE = 42
 # TMAP Configuration
 # =======================
 
+TMAP_NAME = 'representative_cluster'
+
 # =======================
 # File Paths
 # =======================
@@ -69,12 +71,18 @@ INPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M','cluster_representatives.cs
 
 OUTPUT_TMAP_PATH = os.path.join(BASE_DIR, 'data/230M/', 'maps/')
 
+# =======================
+# LSH Configuration
+# =======================
+
+PERMUTATIONS = 512 # Number of permutations to be used in MinHashing
+
+TMAP_K = 20 # Number of neighbors 
 
 # =======================
 # Layout Configuration
 # =======================
 
-TMAP_NODE_SIZE = 1/20
+TMAP_NODE_SIZE = 1/40
 
-TMAP_POINT_SCALE = 4.0
-TMAP_K = 20 # Number of neighbors 
+TMAP_POINT_SCALE = 3.0
