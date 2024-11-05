@@ -54,11 +54,10 @@ def main() -> None:
 
     logging.info(f"Processing file: {args.data_file}")  
     logging.info(f"Output directory: {args.output_dir}")
-    logging.info(f"Using K={TMAP_K} (number of neighbors)")
+    logging.info(f"Using {TMAP_K} number of neighbors")
     logging.info(f"Using {args.n_jobs} CPU cores") 
 
     # This line of code generates a simple TMAP
-    # All configuration should be done passing the arguments either with config.py file or args.parser. 
     tmap_generator.tmap_little()
     
 

@@ -10,6 +10,7 @@ import numpy as np
 import tmap as tm
 import hashlib 
 from mapchiral.mapchiral import encode as mapc_enc
+import numpy.typing as npt
 
 class FingerprintCalculator:
     def __init__(
@@ -19,11 +20,12 @@ class FingerprintCalculator:
             permutations: Optional[int] = 512, 
             fp_size: Optional[int] = 1024,
             radius: Optional[int] = 2):
-        self.radius = radius
+
         self.smiles_list = smiles_list
         self.fingerprint_type = fingerprint_type.lower()
         self.permutations = permutations
         self.fp_size = fp_size
+        self.radius = radius
 
     def _calculate_mhfp_fp(self, smiles: str) -> np.array:
         """Calculate MHFP for a single SMILES string"""
@@ -81,6 +83,7 @@ class FingerprintCalculator:
         return np.array(mapc_enc(Chem.MolFromSmiles(smiles), max_radius=self.radius, n_permutations=self.fp_size, mapping=False))
         
     def _fp_method(self):
+        # TODO: Add support for map4
         """
         Returns the correct function to calculate the fingerprints based on user selection
         """
@@ -93,7 +96,7 @@ class FingerprintCalculator:
         elif self.fingerprint_type == 'morgan':
             return self._calculate_morgan_fp                
     
-    def calculate_fingerprints(self) -> np.array:
+    def calculate_fingerprints(self)-> npt.NDArray:
         with Pool(processes=N_JOBS) as pool: 
             fingerprints = pool.map(self._fp_method(), self.smiles_list)
 
