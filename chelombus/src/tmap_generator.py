@@ -154,9 +154,12 @@ class TmapGenerator:
         start = time.time()
         labels = []
         for i, row in self.dataframe.iterrows():
-            if self.categ_cols != None:
+            if self.categ_cols is not None:
                 label = '__'.join(str(row[col]) for col in self.categ_cols)
-                labels.append(row['smiles']+'__'+label)
+                # Create a clickable link with cluster_id that points to the Flask endpoint
+                link = f'<a href="/generate/{label}" target="_blank">{label}</a>'
+                labels.append(row['smiles'] + '__' + link)
+
             else:
                 labels.append(row['smiles'])
         descriptors = self.tmap_constructor.mol_properties_from_df()

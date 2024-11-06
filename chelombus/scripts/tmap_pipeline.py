@@ -93,8 +93,8 @@ if __name__ == "__main__":
 
     # Source pattern and destination directory
     source_pattern = os.path.join(BASE_DIR, '*.html')
-    destination_dir = os.path.join(BASE_DIR, '../tmaps/')
-
+    # destination_dir = os.path.join(BASE_DIR, '../backend', 'static')
+    destination_dir = '/home/afloresep/work/chelombus/backend/static/'
     # Make the destination directory if it doesn't exist
     os.makedirs(destination_dir, exist_ok=True)
 
@@ -106,6 +106,6 @@ if __name__ == "__main__":
     source_pattern_js = os.path.join(BASE_DIR, '*.js')
     for file_path in glob.glob(source_pattern_js):
         shutil.move(file_path, destination_dir)
-    
+        print(f'moving {file_path} to {destination_dir}')
     end_time = time.time()
     print(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
