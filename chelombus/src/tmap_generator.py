@@ -136,13 +136,22 @@ class TmapGenerator:
         pass
 
     def tmap_little(self): # Generates TMAP with minimum configuration, for testing purposes
-        
+
+        start = time.time() 
         logging.info("Calculating fingerprints")
         fingerprints = self.fingerprint_calculator.calculate_fingerprints()
+        end = time.time()
+        logging.info(f"Fingeprints calculations took {end - start} seconds")
 
         logging.info("Constructing LSH Forest")
+        start = time.time()
         self.construct_lsh_forest(fingerprints)
+        end = time.time()
+        logging.info(f"LSH was constructed in {end - start} seconds")
 
+
+        logging.info("Creating labels")
+        start = time.time()
         labels = []
         for i, row in self.dataframe.iterrows():
             if self.categ_cols != None:
@@ -151,8 +160,12 @@ class TmapGenerator:
             else:
                 labels.append(row['smiles'])
         descriptors = self.tmap_constructor.mol_properties_from_df()
+        end = time.time()
+        logging.info(f"Labels took {end - start} seconds to create")
 
         # Plotting
+        logging.info("Setting up TMAP and plotting")
+        start = time.time()
         f = Faerun(
             view="front",
             coords=False,
@@ -182,7 +195,8 @@ class TmapGenerator:
 
         f.add_tree(self.tmap_name+"_TMAP_tree", {"from": self.s, "to": self.t}, point_helper=self.tmap_name+"_TMAP")
         f.plot(self.tmap_name+"_TMAP", template='smiles')
-
+        end = time.time()
+        logging.info(f"Plotting took {end - start} seconds")
 
     def _get_pca_vectors(self):
         """
@@ -207,7 +221,6 @@ class TmapGenerator:
         tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints] #TMAP requires fingerprints to be passed as VectorUint
 
         # LSH Indexing and coordinates generation
-        logging.info("Plotting...")
         lf = tm.LSHForest(self.permutations)
         lf.batch_add(tm_fingerprints)
         lf.index()
@@ -222,7 +235,7 @@ class TmapGenerator:
         start = time.time()
         self.x, self.y, self.s, self.t, _ = tm.layout_from_lsh_forest(lf, cfg)
         end = time.time()
-        logging.info(f'{(end-start)} seconds')
+        logging.info(f'Layout from lsh forest took {(end-start)} seconds')
 
     def plot_faerun(self, fingerprints):
         logging.info("Constructing LSH Forest...")
@@ -288,9 +301,6 @@ class TmapGenerator:
         cluster_id (str int_int_int) Find the cluster_id which TMAP we will do. It has to be in format PCA1_PCA2_PCA3. 
         e.g. 0_12_10. Right now it finds the csv file with this label. In the future it will retrieve it from the database
         """
-
-        
-
         logging.info(f'Getting data for cluster_id = {cluster_id}')
         self.dataframe = self.dataframe[self.dataframe['cluster_id'] == cluster_id]
         name = f'cluster{cluster_id}'

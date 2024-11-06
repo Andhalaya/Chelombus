@@ -41,12 +41,11 @@ def calculate_fingerprints(df, encoder):
             valid_indices.append(idx)
         except Exception as e:
             print(f"Error encoding Fingerprints {smiles}: {str(e)}")
-    
     return fingerprints, valid_indices
 
 def main():
     # File paths
-    csv_file = r'/home/afloresep/work/chelombus/notebooks/cluster_000.csv'
+    csv_file = r'/home/afloresep/work/chelombus/data/230M/cluster_representatives.csv'
 
     # Load data
     df = pd.read_csv(csv_file)
@@ -57,8 +56,8 @@ def main():
 
     # Calculate or load fingerprints
     fingerprints, valid_indices = calculate_fingerprints(df, mhfp_enc)
-
-    # Update DataFrame with valid entries only
+    print(len(fingerprints), type(fingerprints))
+    # Updte DataFrame with valid entries only
     df = df.iloc[valid_indices].reset_index(drop=True)
 
     # LSH Indexing and coordinates generation
@@ -75,6 +74,7 @@ def main():
     cfg.k = 20
     cfg.sl_scaling_type = tm.RelativeToAvgLength
     x, y, s, t, _ = tm.layout_from_lsh_forest(lf, cfg)
+
 
     print("Plotting...")
     # Plotting

@@ -169,7 +169,7 @@ def plot_faerun(x, y, s, t, df):
 
 def main():
     
-    data = pd.read_csv('/home/afloresep/work/chelombus/data/230M/cluster_representatives.csv')
+    data = pd.read_csv('data/230M/cluster_representatives.csv')
 
     # Extract PCA coordinates (fingerprints)
     pca_columns = ['PCA_1', 'PCA_2', 'PCA_3'] 

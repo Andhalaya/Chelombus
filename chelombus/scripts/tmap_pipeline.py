@@ -1,10 +1,12 @@
 # File to run the Clustering pipeline
 import os
+import glob 
 import re 
 import sys
 import time
 import logging 
 import argparse
+import shutil
 import h5py
 import numpy as np
 from tqdm import tqdm
@@ -18,7 +20,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import configurations and modules
-from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH, CLUSTER_DATA_PATH, 
+from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH, CLUSTER_DATA_PATH, BASE_DIR,
                     LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS, TMAP_K, TMAP_NAME)
 from src.tmap_generator import TmapGenerator
 
@@ -50,8 +52,8 @@ def main() -> None:
     # Set up logging based on the parsed arugments or config defaults
     setup_logging(args.log_level, args.log)
 
-    logging.info(f"Processing file: {args.data_file}")  
-    logging.info(f"Output directory: {args.output_dir}")
+    # logging.info(f"Processing file: {args.data_file}")  
+    # logging.info(f"Output directory: {args.output_dir}")
     logging.info(f"Using K={TMAP_K} (number of neighbors)")
     logging.info(f"Using {args.n_jobs} CPU cores") 
 
@@ -81,9 +83,29 @@ def main() -> None:
                 raise ValueError(f"Invalid cluster_id format. Please provide a cluster_id in the format 'int_int_int'. Instead got: {args.l}")
 
 
+
 if __name__ == "__main__":
+
     start_time = time.time()
     main()
+    logging.info("TMAP successfully generated")
+    # Move TMAP output files to the /tmaps folder
+
+    # Source pattern and destination directory
+    source_pattern = os.path.join(BASE_DIR, '*.html')
+    destination_dir = os.path.join(BASE_DIR, '../tmaps/')
+
+    # Make the destination directory if it doesn't exist
+    os.makedirs(destination_dir, exist_ok=True)
+
+    # Loop over all files that match the pattern and move them
+    for file_path in glob.glob(source_pattern):
+        shutil.move(file_path, destination_dir)
+
+    # Repeat for JavaScript files
+    source_pattern_js = os.path.join(BASE_DIR, '*.js')
+    for file_path in glob.glob(source_pattern_js):
+        shutil.move(file_path, destination_dir)
+    
     end_time = time.time()
-    print('TMAP successfully generated.')
     print(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
