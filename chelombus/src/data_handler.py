@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import IncrementalPCA
-from src.utils.helper_functions import find_input_type
+from src.utils.helper_functions import _find_input_type
 from memory_profiler import profile
 import numpy as np
 import time
@@ -14,28 +14,46 @@ import tqdm
 from src.fingerprint_calculator import FingerprintCalculator
 
 def get_total_chunks(file_path, chunksize):
-    """ Calculate number of chunks based on self.chunksize for tqdm 
-    Maybe avoid for files that are too large >150 GB? Takes about ~2 minutes for such size
+    """ 
+    Calculate number of chunks based on self.chunksize for tqdm 
+    Keep in mind that it will take ~2 min for 650M lines. 
     You can also just add manually the amount of lines to get an estimation
     """
     print('Preparing tqdm...')
     total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
-    # total_lines = int(664075400) # Lines for the Enamine_REAL file ~664M compounds
     total_chunks = (int(total_lines) + int(chunksize) - 1) // int(chunksize)
     return total_chunks
     
 class DataHandler:
+    """Handles data loading, preprocessing, and feature extraction for large molecular datasets
+    
+    Attributes:
+        file_path (str): Path to the input data file
+        chunksize (int): Number of rows to read per chunk
+        datatype (str): Type of datafile (e.g. 'csv' ,'cxsmiles')"""
+        
     def __init__(self, file_path, chunksize):
+        """
+        Args: 
+            file_path (str): Path to data file
+            chunksize (int): Number of rows per data chunk
+        """
         self.file_path = file_path
         self.chunksize = chunksize
-        self.datatype = find_input_type(file_path)
+        self.datatype = _find_input_type(file_path)
 
-    def get_total_lines(self):
+    def _get_total_lines(self) -> int:
         """Calculate the total number of lines in the file."""
         with open(self.file_path, 'r', encoding='utf-8') as f:
             return sum(1 for _ in f)
 
     def load_data(self):
+        """
+        Loads data in chunks based on file type and chunk size
+        
+        Returns: 
+            Generator: Yields datachunks
+        """
         total_chunks = get_total_chunks(self.file_path, self.chunksize)
 
         # Dynamically dispatch the right method based on datatype
@@ -96,15 +114,17 @@ class DataHandler:
 
         
     
-    def extract_smiles_and_features(self, data):
+    def extract_smiles_and_features(self, data) -> tuple:
             """ 
-            Method for extracting smiles and features in pandas. `data` object needs to be pd.DataFrame. 
-            Not optimal for very large datasets? So far I've tried with 10M samples and performed well
-            input: 
-            param: data. pd.Dataframe, .txt or .cxsmiles file 
-            output:
-            smiles = np.array(batch_size,)
-            features = np.array(batch_size, features) 
+            Extracts SMILES strings and associated features from a data chunk.
+            Args:
+             data (pd.DataFrame or list): Data chunk, either as a DataFrame or list of lists.
+
+            Returns:
+             tuple: Array of SMILES strings and array of features = (smiles_list, features_list)
+             where, 
+                    smiles = np.array(batch_size,)
+                    features_list =  np.array(batch_size, features)
             """
             try: 
                 data.columns = data.columns.str.lower() # for csv file
@@ -123,16 +143,21 @@ class DataHandler:
                 """
                 smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
                 features_list = np.array(data)[:,1:]
-
-                # return smiles_list, features_list
- 
             
             return np.array(smiles_list), np.array(features_list)
     
     def one_hot_encode(self, features): 
         """ 
-        #TODO Idea is to one hot encode categorical features e.g. 'target value'
-        and use it in PCA 
+        One-hot encodes categorical features for PCA analysis. 
+
+        Args: 
+            feaetures (np.ndarray): Array of categorical features. 
+
+        Returns:
+            np.ndarray: One-hot encoded feature array.
+
+        
+        TODO: Idea is to one hot encode categorical features e.g. 'target value' and use it in PCA 
         """
         one_hot_encoder = ColumnTransformer(
             transformers=[
@@ -148,6 +173,11 @@ class DataHandler:
     def process_chunk(self, idx, chunk, output_dir):
         """
         Process a single chunk of data by calculating fingerprints and saving them to a parquet file
+
+        Args:
+            idx (int): Chunk index
+            chunk (pd.DataFrame): DataChunk
+            output_dir(str): Directory to save processed chunk data
         """
         try:
             # Check if chunk already exists
@@ -200,4 +230,3 @@ class DataHandler:
 
         except Exception as e:
             logging.error(f"Error processing chunk {idx}: {e}", exc_info=True)
-
