@@ -1,8 +1,8 @@
 # Chelombus
 
 ## Project Overview
-Chelombus is a tool designed to visualize exceptionally large datasets of molecules—up to billions of compounds. It combines Principal Component Analysis with dynamic TMAP creation to efficiently cluster and visualize chemical spaces
 
+Chelombus is a tool designed to visualize exceptionally large datasets of molecules—up to billions of compounds. It combines Principal Component Analysis with dynamic TMAP creation to efficiently cluster and visualize chemical spaces
 
 ### Structure
 
@@ -35,8 +35,7 @@ chelombus/
 └── LICENSE                        # License information
 ```
 
-
----- 
+----
 
 ## How It Works
 
@@ -58,8 +57,8 @@ To reduce the dimensionality of the fingerprint vectors, Chelombus employs Incre
 - **Dimension Reduction**: While reducing dimensions, it's observed that variance drops below 95% when going below 3D. Therefore, it's recommended to keep at least 3 principal components.
 - **Configuration**: You can set the number of components with the `PCA_N_COMPONENTS` parameter in the `config.py` file.
 - **Process**:
-    - Performs a partial fit of the full MQN vectors for each batch.
-    - Transforms the data, reducing the 42-dimensional fingerprints to the selected lower-dimensional space.
+  - Performs a partial fit of the full MQN vectors for each batch.
+  - Transforms the data, reducing the 42-dimensional fingerprints to the selected lower-dimensional space.
 
 ### 3. Creating the N-Dimensional Grid (e.g., 3D Cube)
 
@@ -69,7 +68,7 @@ Actually, if you do this you'll get something like this:
 
 ![alt text](images/output-1.png)
 
-Which is not very useful. 
+Which is not very useful.
 
 To address this, we:
 
@@ -77,25 +76,25 @@ To address this, we:
 - **Create a Grid or "Pixels"**: Each intersection point in the grid represents a "pixel" or bin in the N-dimensional space
 
 ![alt text](images/grid-cube.png)
- 
-- **Assign Compounds to Pixels**: Each compound is mapped to the nearest **pixel** based on its PCA-reduced coordinates. Multiple compounds may fall into the same pixel, thus clustering the result. 
+
+- **Assign Compounds to Pixels**: Each compound is mapped to the nearest **pixel** based on its PCA-reduced coordinates. Multiple compounds may fall into the same pixel, thus clustering the result.
+
 ### The fitting
-Now, what if we fit every compound with its respective 3D coordinates to these points in the cube? Every point will fall in the pixel that its closest to. Some of the points will be grouped in the same pixel and some pixels will have only one compound, or none. 
+
+Now, what if we fit every compound with its respective 3D coordinates to these points in the cube? Every point will fall in the pixel that its closest to. Some of the points will be grouped in the same pixel and some pixels will have only one compound, or none.
 
 **Visual** **Example**
 **High Pixel Density (100×100×100 Grid)**: Mapping ~200,000 compounds results in a cluttered visualization.
 
 ![alt text](images/smiles-grid.png)
 
-
-
-It's a little bit messy, so let's change the step size (pixel density) of the cube to 10x10x10. 
+It's a little bit messy, so let's change the step size (pixel density) of the cube to 10x10x10.
 
 ![alt text](images/smaller-grid.png)
 
 **Reduced Pixel Density (10×10×10 Grid)**: By increasing the step size, we get fewer pixels and more compounds per pixel, resulting in a clearer visualization.
 
-The range in which the points are dispersed is the same $[0, 100]$, we just changed the step size from 1 to 100, which means now the pixels can only take coordinates $[0, 10, 20 ..., 90, 100]$. 
+The range in which the points are dispersed is the same $[0, 100]$, we just changed the step size from 1 to 100, which means now the pixels can only take coordinates $[0, 10, 20 ..., 90, 100]$.
 
 ### 4. Selecting the Range for Each PCA Axis
 
@@ -103,7 +102,7 @@ An important consideration in PCA analysis is how to select an appropriate range
 
 #### Normalization (Recommended)
 
-A straightforward method for defining the range is normalizing the coordinates to fit within the $[0,1]$ interval and then scaling them into a 100×100×100 cube by multiplying each coordinate by 100. 
+A straightforward method for defining the range is normalizing the coordinates to fit within the $[0,1]$ interval and then scaling them into a 100×100×100 cube by multiplying each coordinate by 100.
 
 However, this approach has limitations when the dataset contains outliers. Outliers can disproportionately affect the min-max values, leading to skewed results. To address this, one could use standard scaling:
 
@@ -141,13 +140,82 @@ These visuals demonstrate that our approach has effectively created meaningful c
 ![text](images/cluster_visualizations/cluster_133.png)
 ![text](images/cluster_visualizations/cluster_26.png)
 
-## class FingerprintCalculator
+## Overview
 
-### Initiate 
-fp_calculator = FingerprintCalculator(your_dataframe['smiles'], 'mqn') --> This will calculate the MQN fingerprints. 
-For example, this way is used when running the clustering pipeline as it will only work with MQN fingerprints
+This project provides tools to visualize and analyze large molecular datasets through interactive topological maps (TMAP) and data handlers for processing large files.
 
-fp_calculator = FingerprintCalculator(smiles_list, 'mhfp', permutations=1024) --> This will calculate the MHFP with 1024 permutations (default is 512)
+## Features
 
-### Calculate fingerprints
-fingerpints = fp_calculator.calculate_fingerprints() -> returns np.array witht the fp vectors of same length as smiles_list
+- Molecular property calculation from SMILES strings.
+- TMAP generation for clustering and visualization.
+- Large dataset handling with chunk processing for memory efficiency.
+
+## Installation
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/your-repo/project-name.git
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Classes
+
+### `TmapConstructor`
+
+A helper class to calculate molecular properties from SMILES strings and handle data outliers for TMAP visualization.
+
+- **Attributes**:
+  - `dataframe` (pd.DataFrame): DataFrame with SMILES strings to process.
+- **Methods**:
+  - `_calculate_threshold(data)`: Calculates a threshold for outlier removal.
+  - `_mol_properties_from_smiles(smiles)`: Generates properties for a single SMILES string.
+  - `mol_properties_from_df()`: Processes all SMILES entries in the dataframe to extract properties.
+
+### `TmapGenerator`
+
+Generates TMAPs for molecular datasets, using fingerprints and a variety of visualization options.
+
+- **Attributes**:
+  - `df_path` (str): Path to the data CSV file.
+  - `fingerprint_type` (str): Type of fingerprint for TMAP visualization.
+  - `permutations` (int): Number of permutations for MinHash.
+- **Methods**:
+  - `tmap_little()`: Creates a TMAP with minimal configuration.
+  - `generate_representatives_tmap(type_vector)`: Generates TMAP for cluster representatives.
+  - `construct_lsh_forest(fingerprints)`: Builds LSH forest for visualization.
+
+### `DataHandler`
+
+Manages data loading and feature extraction for large molecular datasets in chunks.
+
+- **Attributes**:
+  - `file_path` (str): Path to the input file.
+  - `chunksize` (int): Rows per chunk.
+- **Methods**:
+  - `load_data()`: Loads data based on file type.
+  - `extract_smiles_and_features(data)`: Extracts SMILES and features from data.
+  - `process_chunk(idx, chunk, output_dir)`: Processes and saves a data chunk.
+
+### `FingerprintCalculator`
+
+- **Method**:
+  - `calculate_fingerprints()`: Returns `np.array` with the fp vectors of same length as `smiles_list`
+
+- **Example**
+
+- `fp_calculator = FingerprintCalculator(your_dataframe['smiles'], 'mqn')`.This will calculate the MQN fingerprints.
+- `fp_calculator = FingerprintCalculator(smiles_list, 'mhfp', permutations=1024)`. This will calculate the MHFP with 1024 permutations (default is 512)
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request with any improvements or bug fixes.
