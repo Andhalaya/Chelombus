@@ -39,12 +39,19 @@ class TmapConstructor:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
+        # Heavy Atom Count
         hac = mol.GetNumHeavyAtoms()
+        # Number of aromatic atoms
         num_aromatic_atoms = sum(1 for atom in mol.GetAtoms() if atom.GetIsAromatic())
+        # Fraction aromatic atoms
         fraction_aromatic_atoms = num_aromatic_atoms / hac if hac > 0 else 0
+        # Number of rings
         number_of_rings = rdMolDescriptors.CalcNumRings(mol)
+        # Molecular weight
         molecular_weight = Descriptors.ExactMolWt(mol)
+        # Partition coefficient
         clogP = Descriptors.MolLogP(mol)
+        # Percentage of carbon atoms in a molecule that are sp3 bonded
         fraction_Csp3 = Descriptors.FractionCSP3(mol)
         
         return (hac, fraction_aromatic_atoms, number_of_rings, clogP, fraction_Csp3, molecular_weight)
@@ -57,6 +64,7 @@ class TmapConstructor:
         # Drop rows with any None or NaN values in the property columns
         # df_clean = self.dataframe.dropna(subset=['hac', 'frac_aromatic', 'num_rings', 'clogp', 'frac_csp3'])
     
+        # TODO: Worth it? I won't delete it for now. Might be useful in the future
         # Calculate thresholds for each property using the clean DataFrame
         hac_threshold = self._calculate_threshold(self.dataframe['hac'])
         frac_threshold= self._calculate_threshold(self.dataframe['frac_aromatic'])
@@ -129,13 +137,7 @@ class TmapGenerator:
         self._representatives_dataframe = pd.read_csv(self.representatives_dataframe_file_path)
         
 
-    def _get_fingerprint_vectors(self):
-        """
-        The vectors used for the TMAP layout will be the fingerprints calcualted from the SMILES
-        """
-        pass
-
-    def tmap_little(self): # Generates TMAP with minimum configuration, for testing purposes
+    def tmap_little(self): # Generates TMAP with minimum configuration 
 
         start = time.time() 
         logging.info("Calculating fingerprints")
@@ -148,7 +150,6 @@ class TmapGenerator:
         self.construct_lsh_forest(fingerprints)
         end = time.time()
         logging.info(f"LSH was constructed in {end - start} seconds")
-
 
         logging.info("Creating labels")
         start = time.time()
@@ -172,7 +173,7 @@ class TmapGenerator:
         f = Faerun(
             view="front",
             coords=False,
-            title="",
+            title=self.tmap_name,
             clear_color="#FFFFFF",
         )
 
@@ -235,68 +236,8 @@ class TmapGenerator:
         cfg.sl_extra_scaling_steps = 10
         cfg.k = TMAP_K 
         cfg.sl_scaling_type = tm.RelativeToAvgLength
-        start = time.time()
+        # NOTE: This is one of the bottlenecks of TMAP. I am not sure whether it could be improved some how. 
         self.x, self.y, self.s, self.t, _ = tm.layout_from_lsh_forest(lf, cfg)
-        end = time.time()
-        logging.info(f'Layout from lsh forest took {(end-start)} seconds')
-
-    def plot_faerun(self, fingerprints):
-        logging.info("Constructing LSH Forest...")
-        self.construct_lsh_forest(fingerprints) 
-        f = Faerun(view="front", 
-                    coords=False, 
-                    title= "", 
-                    clear_color="#FFFFFF")
-        
-        def safe_create_categories(series):
-            return Faerun.create_categories(series.fillna('Unknown').astype(str))
-        
-        # Create categories
-        labels = []
-        for i, row in self.dataframe.iterrows():
-            if self.categ_cols != None:
-                label = '__'.join(str(row[col]) for col in self.categ_cols)
-                labels.append(row['smiles']+'__'+label)
-            else:
-                labels.append(row['smiles'])
-
-        logging.info("Plotting...")
-        properties = self.tmap_constructor.mol_properties_from_df() 
-
-        # Categorical = [True] * categorical_columns + [False]*numerical_columns 
-        numerical_col= [False]*5 # These are 5 by default. 5 molecular properties 
-        categorical_col = [True]*len(self.categ_cols)
-        bool_categorical = categorical_col + numerical_col  # List of booleans required to indicate if a label is categorical or numerical
-        
-        cluster_labels, cluster_data = safe_create_categories(self.dataframe['cluster_id'])
-
-        colormap = ['tab10' if value else 'viridis' for value in bool_categorical]
-        # properties.insert(0, cluster_data)
-        series_title = self.categ_cols + ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3']
-        c = random.sample(range(1,len(properties[2])*2), len(properties[2]))
-        f.add_scatter(
-            "mapc_targets", 
-            {
-                "x": self.x, 
-                "y": self.y, 
-                "c": c, 
-                "labels": self.dataframe['smiles'], 
-            }, 
-        shader="smoothCircle",
-        point_scale= TMAP_POINT_SCALE,
-        max_point_size=20,
-        interactive=True,
-        legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
-        categorical= bool_categorical, 
-        colormap= colormap, 
-        series_title= series_title, 
-        has_legend=True,
-) 
-        # Add tree
-        
-        f.add_tree("mhfp_tmap_node140_TMAP_tree", {"from": self.s, "to": self.t}, point_helper="mhfp_tmap_node140_TMAP")
-        f.plot('mhfp_tmap_node140_TMAP', template='smiles')
-        # Plot
 
     def generate_cluster_tmap(self, cluster_id: str):
         """

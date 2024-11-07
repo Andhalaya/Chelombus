@@ -9,8 +9,7 @@ def setup_logging():
     )
 
 
-
-def find_input_type(file_path):
+def _find_input_type(file_path):
       if file_path.endswith('csv'):
             return 'csv'
       elif file_path.endswith('txt'):
@@ -19,10 +18,4 @@ def find_input_type(file_path):
             return 'cxsmiles'
       else: 
             raise ValueError('Unsupported input file. Only .csv, .txt. and .cxsmiles files are supported')
-
-def validate_data():
-    pass
-
-def i_o_operations():
-    pass
 

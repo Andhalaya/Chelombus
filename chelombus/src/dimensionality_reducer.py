@@ -1,3 +1,4 @@
+# This whole file should go away, old idea of calculating percentiles and doing the fitting. Not used at the end.
 import pandas as pd
 import numpy as np
 import pickle
