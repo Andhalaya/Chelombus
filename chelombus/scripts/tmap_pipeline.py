@@ -86,26 +86,32 @@ def main() -> None:
 
 if __name__ == "__main__":
 
+    logging.basicConfig(level=logging.INFO)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
     start_time = time.time()
     main()
     logging.info("TMAP successfully generated")
-    # Move TMAP output files to the /tmaps folder
 
-    # Source pattern and destination directory
-    source_pattern = os.path.join(BASE_DIR, '*.html')
-    # destination_dir = os.path.join(BASE_DIR, '../backend', 'static')
-    destination_dir = '/home/afloresep/work/chelombus/backend/static/'
-    # Make the destination directory if it doesn't exist
+    # Define paths
+    source_pattern = os.path.join('/home/afloresep/work/chelombus/backend', '*.html')
+    destination_dir = os.path.join('/home/afloresep/work/chelombus/backend', 'static')
     os.makedirs(destination_dir, exist_ok=True)
 
-    # Loop over all files that match the pattern and move them
+    logging.info(f"Source pattern for HTML files: {source_pattern}")
+    logging.info(f"Destination directory: {destination_dir}")
+
+    # Move HTML files
     for file_path in glob.glob(source_pattern):
+        logging.info(f"Moving HTML file: {file_path} to {destination_dir}")
         shutil.move(file_path, destination_dir)
 
-    # Repeat for JavaScript files
-    source_pattern_js = os.path.join(BASE_DIR, '*.js')
+    # Move JavaScript files
+    source_pattern_js = os.path.join('/home/afloresep/work/chelombus/backend', '*.js')
     for file_path in glob.glob(source_pattern_js):
+        logging.info(f"Moving JS file: {file_path} to {destination_dir}")
         shutil.move(file_path, destination_dir)
-        print(f'moving {file_path} to {destination_dir}')
+
     end_time = time.time()
+    logging.info("All files moved successfully")
     print(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
