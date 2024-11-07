@@ -10,3 +10,4 @@ chelombus/config.py
 chelombus/notebooks/exploratory_analysis.ipynb
 backend/static/
 chelombus/tmaps/
+chelombus/src/dimensionality_reducer.py
