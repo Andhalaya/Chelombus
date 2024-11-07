@@ -8,3 +8,5 @@ chelombus/output.log
 chelombus/notebooks/data_analysis.ipynb
 chelombus/config.py
 chelombus/notebooks/exploratory_analysis.ipynb
+backend/static/
+chelombus/tmaps/
