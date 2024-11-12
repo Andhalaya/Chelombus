@@ -18,6 +18,7 @@ services:
     build: ./pyspark
     volumes:
       - /mnt/10tb_ssd/parquet_files:/data/parquet_files
+      - ./shared_volume:/shared_volume
     depends_on:
       - clickhouse
     networks:
@@ -30,6 +31,7 @@ services:
       - "9000:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
+      - ./shared_volume:/shared_volume
     networks:
       - chelombus-network
 
