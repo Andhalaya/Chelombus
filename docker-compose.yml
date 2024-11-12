@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: nginx-frontend
+    build: ./frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./shared_volume:/usr/share/nginx/html/generated_tmaps
+    depends_on:
+      - dynamic-tmap 
+    networks:
+      - chelombus-network
+
+  pyspark:
+    image: pyspark
+    build: ./pyspark
+    volumes:
+      - /mnt/10tb_ssd/parquet_files:/data/parquet_files
+    depends_on:
+      - clickhouse
+    networks:
+      - chelombus-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - chelombus-network
+
+  dynamic-tmap:
+    build: ./dynamic_tmap
+    volumes:
+      - ./shared_volume:/app/generated_tmaps
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+    depends_on:
+      - clickhouse
+    networks:
+      - chelombus-network
+
+volumes:
+  clickhouse_data:
+
+networks:
+  chelombus-network:
