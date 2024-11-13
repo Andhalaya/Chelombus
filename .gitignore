@@ -11,3 +11,4 @@ dynamic_tmap/notebooks/exploratory_analysis.ipynb
 backend/static/
 dynamic_tmap/tmaps/
 data/
+dynamic_tmap/__pycache__/
