@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     image: nginx-frontend
@@ -13,16 +11,7 @@ services:
     networks:
       - chelombus-network
 
-  pyspark:
-    image: pyspark
-    build: ./pyspark
-    volumes:
-      - /mnt/10tb_ssd/parquet_files:/data/parquet_files
-      - ./shared_volume:/shared_volume
-    depends_on:
-      - clickhouse
-    networks:
-      - chelombus-network
+
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
@@ -30,7 +19,7 @@ services:
       - "8123:8123"
       - "9000:9000"
     volumes:
-      - clickhouse_data:/var/lib/clickhouse
+      - /mnt/10tb_hdd/:/var/lib/clickhouse/user_files/data
       - ./shared_volume:/shared_volume
     networks:
       - chelombus-network
@@ -39,10 +28,25 @@ services:
     build: ./dynamic_tmap
     volumes:
       - ./shared_volume:/app/generated_tmaps
+      - /mnt/10tb_hdd/:/data
+      - /home/afloresep/miniforge3/envs/chelombus:/opt/conda/envs/chelombus
     environment:
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=8123
     depends_on:
+      - clickhouse
+    networks:
+      - chelombus-network
+
+  pyspark:
+    image: pyspark
+    build: ./pyspark
+    volumes:
+      - /mnt/10tb_hdd/:/data/parquet_files
+      - ./shared_volume:/shared_volume
+      - ./pyspark/scripts:/app/scripts
+    depends_on:
+      - dynamic-tmap
       - clickhouse
     networks:
       - chelombus-network
