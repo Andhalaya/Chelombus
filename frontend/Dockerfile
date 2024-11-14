@@ -12,8 +12,8 @@ COPY homepage.html /usr/share/nginx/html/
 COPY static/ /usr/share/nginx/html/static/
 
 # Copy the initial HTML and js file (these are the primary TMAPs for each database)
-COPY enamine_database.html /usr/share/nginx/html/
-COPY enamine_database.js /usr/share/nginx/html/
+# COPY enamine_database.html /usr/share/nginx/html/
+# COPY enamine_database.js /usr/share/nginx/html/
 
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
