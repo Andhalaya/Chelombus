@@ -66,7 +66,6 @@ if __name__ == '__main__':
     try:
         # Process each input file
         for input_file in input_files:
-            print(f"\nProcessing file: {input_file}")
             process_input_file(input_file)
     finally:
         # Stop the progress display and join the thread

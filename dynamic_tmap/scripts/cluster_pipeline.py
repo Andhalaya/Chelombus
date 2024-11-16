@@ -190,7 +190,14 @@ def main() -> None:
 
         
 if __name__ == '__main__':
-    start_time = time.time() 
-    main() 
+    start_time = time.time()
+    # Run the main function
+    main()
+    # Manually invoke garbage collection
+    gc.collect()
+    # Clear all modules (optional but useful for memory cleanup)
+    sys.modules.clear()
+    # Clear any cached variables or objects
+    del main
     end_time = time.time()
     logging.info(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")

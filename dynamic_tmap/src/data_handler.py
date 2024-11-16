@@ -62,37 +62,28 @@ class DataHandler:
         except Exception as e:
             raise ValueError(f"Error reading file: {e}")
             
+
     def _load_cxsmiles_data(self):  # Generator object, to be used in enumerate
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                # Skip the header line
-                header = f.readline()  
-                
-                while True:
-                    smiles_and_features = []
-                    try:
-                        for _ in range(self.chunksize):
-                            line = f.readline()
-                            if not line:
-                                break
-                            
-                            # Extract the SMILES from the line
-                            line_splitted = line.strip().split('\t') # -> List 
-                            if line_splitted:  # Ensure it's not an empty line
-                                smiles_and_features.append(line_splitted)
+            # Define the column name
+            smiles_col = 'smiles'
 
-                    except Exception as e:
-                        raise ValueError(f"Error reading chunk: {e}")
-
-                    if not smiles_and_features:
-                        break  # Stop when no more lines
-
-                    yield smiles_and_features  # Yield the chunk of SMILES
-
-        except FileNotFoundError:
-            raise ValueError(f"File not found: {self.file_path}")
+            # Use pandas to read the 'smiles' column in chunks
+            for chunk in pd.read_csv(
+                self.file_path,
+                sep='\t',
+                usecols=[smiles_col],
+                chunksize=self.chunksize,
+                dtype={smiles_col: str},  # Ensure that the column is read as string
+                engine='c',  # Use the C engine for faster parsing
+                encoding='utf-8'
+            ):
+                # Convert the column to a list and yield
+                smiles_list = chunk[smiles_col].tolist()
+                yield smiles_list
         except Exception as e:
-            raise ValueError(f"Error opening file: {e}")
+            raise e
+
 
         
     
@@ -106,28 +97,29 @@ class DataHandler:
             smiles = np.array(batch_size,)
             features = np.array(batch_size, features) 
             """
-            try: 
-                data.columns = data.columns.str.lower() # for csv file
-                try: 
-                    smiles_column = data.filter(like='smiles').columns[0]  # Gets the first matching column name
-                except: 
-                    raise ValueError(f"No SMILES column found in {self.file_path}. Ensure there's a column named 'smiles'.")
+            return data
+            # try: 
+            #     data.columns = data.columns.str.lower() # for csv file
+            #     try: 
+            #         smiles_column = data.filter(like='smiles').columns[0]  # Gets the first matching column name
+            #     except: 
+            #         raise ValueError(f"No SMILES column found in {self.file_path}. Ensure there's a column named 'smiles'.")
                 
-                smiles_list = data[smiles_column]
-                features_list = data.drop(columns=[smiles_column])
+            #     smiles_list = data[smiles_column]
+            #     features_list = data.drop(columns=[smiles_column])
             
-            except: 
-                # for .txt or cxsmiles files
-                """
-                 This part assumes that the 'smiles' columns in the txt or cxsmile files is in first position
-                """
-                smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
-                features_list = np.array(data)[:,1:]
+            # except: 
+            #     # for .txt or cxsmiles files
+            #     """
+            #      This part assumes that the 'smiles' columns in the txt or cxsmile files is in first position
+            #     """
+            #     smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
+            #     features_list = np.array(data)[:,1:]
 
-                # return smiles_list, features_list
+            #     # return smiles_list, features_list
  
             
-            return np.array(smiles_list), np.array(features_list)
+            # return np.array(smiles_list), np.array(features_list)
     
     def one_hot_encode(self, features): 
         """ 
