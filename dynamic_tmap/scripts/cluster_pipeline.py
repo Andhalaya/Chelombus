@@ -5,8 +5,6 @@ import sys
 import time
 import logging 
 import argparse
-import h5py
-import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from sklearn.decomposition import IncrementalPCA
@@ -37,10 +35,6 @@ def parse_arguments():
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Logging verbosity level.")
     parser.add_argument('--n-jobs', type=int, default=N_JOBS, help="Number of CPU cores to use.")
     parser.add_argument('--resume', type=int, default=0, help="Resume from a specific chunk.")
-    parser.add_argument('--load', type=int, default=0, choices=[0, 1],
-                        help="Set to 1 for faster processing (fitting entire data into memory), or 0 for lower memory usage (one chunk at a timer). Default is 1.")
-    parser.add_argument('--fit', type=int, default=0, choices=[0, 1], 
-                        help="Set 1 to perform the fitting of coordinates within the range defined by the percentiles 0.01 and 99.99. Default is 0. Should only be used for small datasets as it increases computational time")
     parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
     return parser.parse_args()
 
@@ -75,52 +69,21 @@ def main() -> None:
     output_gen = OutputGenerator()
     dim_reducer = DimensionalityReducer()
        
-    # Load data in chunks
-    data_chunks, total_chunks = data_handler.load_data()
+    # Get correct generator function for loading chunks and number of chunks for tqmd 
+    data_chunk_loader, total_chunks = data_handler.load_data()
 
-    # Process chunks with tqdm progress bar
+    #TODO: Add GPU fingerprint calculation support
+    # Process each chunk: Data chunk loader will yield a chunk and process_chunk will calculate its fingerprints & save them to parquet files
     start = time.time()
-
-    # Process chunks in parallel using ProcessPoolExecutor
-    if args.load == 1:
-        """
-        This will process all chunks in parallel. It ensures fast fingerprint calculation at the cost of loading all data into memory
-        Use only if the whole dataset fits into memory. Otherwise, use sequential chunk calculation
-        """
-        with ProcessPoolExecutor(max_workers=args.n_jobs) as executor:
-            futures = []
-            for idx, chunk in enumerate(tqdm(data_chunks, total=total_chunks, desc="Loading chunks")):
-                # Resume from a specific chunk if needed
-                if idx < args.resume:
-                    continue
-                futures.append(executor.submit(data_handler.process_chunk, idx, chunk, data_handler,  args.output_dir))
-                del idx, chunk
-            # Wait for all futures to complete with error handling
-
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Calculating fingerprints for all chunks"):
-                try:
-                    future.result()  # Raises any exceptions from the workers
-                except Exception as e:
-                    logging.error(f"Error in parallel processing: {e}", exc_info=True)
-
-        # Ensure all process have completed before moving on with Loading Fingerprints and iPCA partial fitting
-        executor.shutdown(wait=True)
-
-    if args.load == 0:
-       """
-       This will instead process each chunk at a time to ensure that the entire dataset is not loaded into memory
-       You can use higher chunksize in this method
-       """
-       for idx, chunk in enumerate(tqdm(data_chunks, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
-           data_handler.process_chunk(idx, chunk, args.output_dir)
-           del idx, chunk
-
+    for idx, chunk in enumerate(tqdm(data_chunk_loader, total= total_chunks, desc=f"Loading chunk and calculating its fingerprints")):
+        data_handler.process_chunk(idx, chunk, args.output_dir)
+        del idx, chunk
     end = time.time()    
     logging.info(f"Preprocessing of data took: {(end - start)/60:.2f} minutes")
  
-    ipca = IncrementalPCA(n_components=args.pca_components)  # Dimensions to reduce to
-
     # Incremental PCA fitting
+    ipca = IncrementalPCA(n_components=args.pca_components)  # Dimensions to reduce to
+    
     for idx in tqdm(range(args.resume, total_chunks), desc="Loading Fingerprints and iPCA partial fitting"):
         try:
             fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
@@ -143,17 +106,11 @@ def main() -> None:
             # Load fingerprint
             fp_chunk_path = os.path.join(args.output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
             df_fingerprints  =  pd.read_parquet(fp_chunk_path)
-            features = []
+            features = [] # Is this necessary?  
             coordinates = ipca.transform(df_fingerprints.drop(columns=['smiles']).values)  # -> np.array shape (chunk_size, n_pca_comp)
 
             # Output coordinates into a parquet file.
             output_gen.batch_to_multiple_parquet(idx, coordinates,df_fingerprints['smiles'].to_list(), features, args.output_dir)
-
-            if args.fit == 1:
-               digest_methods = dim_reducer.digest_generator(args.pca_components)
-
-               for i in range(len(digest_methods)):
-                    digest_methods[i].batch_update(coordinates[:, i])
 
             # Free memory space
             del df_fingerprints, coordinates, features 
@@ -161,33 +118,6 @@ def main() -> None:
 
         except Exception as e:
             logging.error(f"Error during data transformation for chunk {idx}: {e}", exc_info=True)
-
-
-    # Get Percentiles 
-    if args.fit == 1:
-        try:
-            percentiles = get_percentiles(digest_methods, STEPS_LIST)
-            print(percentiles)
-
-        except Exception as e:
-            logging.error(f"Error calculating percentiles: {e}", exc_info=True)
-            # Use default percentiles if calculation fails?
-
-         # Map PCA coordinates 
-        output_gen.steps = [32, 32, 32]  # Number of steps to be taken on each dimension
-        start = time.time()
-
-        logging.info('Fitting coordinates to cube')
-        try:
-             for output_file in os.listdir(os.path.join(args.output_dir, 'output')):
-                 output_gen.fit_coord_multidimensional(output_file, percentiles)
-
-        except Exception as e:
-             logging.error(f"Error fitting coordinates to cube: {e}", exc_info=True)
-
-        end = time.time()
-        logging.info(f'Total time fitting coordinates: {(end - start)/60:.2f} minutes')
-
         
 if __name__ == '__main__':
     start_time = time.time()
@@ -200,4 +130,4 @@ if __name__ == '__main__':
     # Clear any cached variables or objects
     del main
     end_time = time.time()
-    logging.info(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
+    logging.info(f"Total execution time: {int((end_time - start_time) // 3600)} hours, {int(((end_time - start_time) % 3600) // 60)} minutes, and {int((end_time - start_time) % 60)} seconds")
