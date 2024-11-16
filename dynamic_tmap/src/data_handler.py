@@ -63,26 +63,25 @@ class DataHandler:
             raise ValueError(f"Error reading file: {e}")
             
 
-    def _load_cxsmiles_data(self):  # Generator object, to be used in enumerate
+    def _load_cxsmiles_data(self):
+        smiles_col_index = 1  # Index for the 'smiles' column (0-based)
         try:
-            # Define the column name
-            smiles_col = 'smiles'
-
-            # Use pandas to read the 'smiles' column in chunks
             for chunk in pd.read_csv(
                 self.file_path,
                 sep='\t',
-                usecols=[smiles_col],
+                header=None,         # No header row
+                usecols=[smiles_col_index],
                 chunksize=self.chunksize,
-                dtype={smiles_col: str},  # Ensure that the column is read as string
-                engine='c',  # Use the C engine for faster parsing
+                dtype=str,
+                engine='c',
                 encoding='utf-8'
             ):
-                # Convert the column to a list and yield
-                smiles_list = chunk[smiles_col].tolist()
+                # smiles_list = chunk[smiles_col].tolist() -> for when data has column names
+                smiles_list = chunk.iloc[:, 0].tolist()  # Access the first column of the chunk
                 yield smiles_list
         except Exception as e:
-            raise e
+            raise ValueError(f"Error loading data: {e}")
+
 
 
         
@@ -149,7 +148,7 @@ class DataHandler:
                 return            
 
             # Extract smiles and features from chunk
-            smiles_list, features = self.extract_smiles_and_features(chunk)
+            smiles_list = self.extract_smiles_and_features(chunk)
 
             fp_calculator = FingerprintCalculator(smiles_list, 'mqn')
 
@@ -187,7 +186,7 @@ class DataHandler:
             # Save to parquet dataframe
             chunk_dataframe.to_parquet(fp_chunk_path, index=False)
 
-            del features, chunk_dataframe
+            del chunk_dataframe
             gc.collect() # Collect garbage. Not sure if it makes a difference but just in case
 
         except Exception as e:
