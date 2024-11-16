@@ -11,8 +11,6 @@ services:
     networks:
       - chelombus-network
 
-
-
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     ports:
