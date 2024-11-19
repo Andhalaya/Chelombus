@@ -18,7 +18,7 @@ output_path = "/shared_volume/clustering_result.parquet"
 df = spark.read.parquet(input_path)
 
 # Define percentiles for 25 bins
-percentiles = [i / 25.0 for i in range(1, 25)]
+percentiles = [i / 50.0 for i in range(1, 50)]
 pca1_thresholds = df.approxQuantile("PCA_1", percentiles, 0.01)
 pca1_splits = [-float("inf")] + pca1_thresholds + [float("inf")]
 
@@ -31,8 +31,8 @@ window_pca2 = Window.partitionBy("bin_PCA1").orderBy("PCA_2")
 window_pca3 = Window.partitionBy("bin_PCA1", "bin_PCA2").orderBy("PCA_3")
 
 # Assign bins for PCA_2 and PCA_3
-df = df.withColumn("bin_PCA2", ntile(25).over(window_pca2) - 1)
-df = df.withColumn("bin_PCA3", ntile(25).over(window_pca3) - 1)
+df = df.withColumn("bin_PCA2", ntile(50).over(window_pca2) - 1)
+df = df.withColumn("bin_PCA3", ntile(50).over(window_pca3) - 1)
 
 # Create cluster identifier
 df = df.withColumn("cluster_id", concat_ws("_", "bin_PCA1", "bin_PCA2", "bin_PCA3"))
