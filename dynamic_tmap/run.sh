@@ -13,7 +13,7 @@ echo "Total start time: $(date)" | tee -a "$LOG_DIR/total_time.log"
 TOTAL_START=$(date +%s)
 
 # Loop through files from 0 to 9 and run them sequentially
-for i in {1..9}; do
+for i in {0..9}; do
     DATA_FILE="$DATA_DIR/output_file_$i.cxsmiles"
     OUTPUT_DIR="$DATA_DIR/output_file_$i"
     LOG_FILE="$LOG_DIR/output_file_$i.log"
