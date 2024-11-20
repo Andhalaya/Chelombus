@@ -5,6 +5,7 @@ from pyspark.sql import SparkSession
 from pyspark.ml.feature import Bucketizer
 from pyspark.sql.functions import col
 from pyspark.sql.window import Window
+from pyspark.sql.functions import concat_ws
 from pyspark.sql.functions import ntile
 from pyspark.sql.functions import avg, sqrt, pow, col, row_number, broadcast
 
@@ -80,7 +81,10 @@ class ClusterMethod():
         # Assign bins for PCA_3, starting from 0
         dataframe = dataframe.withColumn("bin_PCA3", ntile(self.bin_size[2]).over(window_pca3) - 1)
 
-        # dataframe.select("smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id").show()
+        # Combine bin columns to form a cluster identifier
+        dataframe = dataframe.withColumn("cluster_id", concat_ws("_", "bin_PCA1", "bin_PCA2", "bin_PCA3"))
+
+        dataframe = dataframe.select("smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id")
 
         # return new dataframe
         return dataframe 

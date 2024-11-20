@@ -101,7 +101,10 @@ class OutputGenerator:
         del coordinates
         
         # TODO: Add features to DataFrame using 'features' parameter if needed.
-        batch_data.to_parquet(parquet_path, engine="pyarrow")
+        if os.path.exists(parquet_path):
+            print(f"{parquet_path} exists, skipping...")
+        else:
+            batch_data.to_parquet(parquet_path, engine="pyarrow")
 
         del batch_data 
 
