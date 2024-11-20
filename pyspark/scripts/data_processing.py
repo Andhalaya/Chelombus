@@ -4,44 +4,67 @@ from pyspark.sql.functions import col, concat_ws
 from pyspark.sql.window import Window
 from pyspark.sql.functions import ntile
 
-# Initialize Spark session with increased memory
-spark = SparkSession.builder \
-    .appName("HierarchicalBinning") \
-    .config("spark.driver.memory", "64g") \
-    .config("spark.executor.memory", "64g") \
-    .getOrCreate()
+# optimized_clustering_script.py
 
-# Read the Parquet files from the shared data directory
-input_path = "/data/parquet_files/*.parquet"
-output_path = "/shared_volume/clustering_result.parquet"
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, ntile, concat_ws
+from pyspark.sql.window import Window
+from pyspark.ml.feature import QuantileDiscretizer
+from pyspark.sql.functions import col, ntile, concat_ws
+from pyspark.sql.types import IntegerType
 
-df = spark.read.parquet(input_path)
+from pyspark.sql import SparkSession
+from pyspark.ml.feature import QuantileDiscretizer
+from pyspark.sql.functions import col, concat_ws, ntile
+from pyspark.sql.window import Window
 
-# Define percentiles for 25 bins
-percentiles = [i / 50.0 for i in range(1, 50)]
-pca1_thresholds = df.approxQuantile("PCA_1", percentiles, 0.01)
-pca1_splits = [-float("inf")] + pca1_thresholds + [float("inf")]
+def main():
+    # Initialize SparkSession with the new temporary directory
+    spark = SparkSession.builder \
+        .appName("GridClusteringJob") \
+        .master("local[8]") \
+        .config("spark.driver.memory", "56g") \
+        .config("spark.executor.memory", "56g") \
+        .getOrCreate()
 
-# Bucketize PCA_1
-bucketizer_pca1 = Bucketizer(splits=pca1_splits, inputCol="PCA_1", outputCol="bin_PCA1_temp")
-df = bucketizer_pca1.transform(df).withColumn("bin_PCA1", col("bin_PCA1_temp").cast("integer")).drop("bin_PCA1_temp")
+    df = spark.read.parquet("/mnt/samsung_2tb/mixed_data/results/test/*.parquet")
+    df.count()
 
-# Define windows for PCA_2 and PCA_3 binning
-window_pca2 = Window.partitionBy("bin_PCA1").orderBy("PCA_2")
-window_pca3 = Window.partitionBy("bin_PCA1", "bin_PCA2").orderBy("PCA_3")
+    # Step 1: Assign Clusters Based on PCA_1
+    discretizer_pca1 = QuantileDiscretizer(
+        numBuckets=50, inputCol="PCA_1", outputCol="cluster_pca1", relativeError=0.01
+    )
+    df = discretizer_pca1.fit(df).transform(df)
+    df = df.withColumn("cluster_pca1", col("cluster_pca1").cast(IntegerType()))
 
-# Assign bins for PCA_2 and PCA_3
-df = df.withColumn("bin_PCA2", ntile(50).over(window_pca2) - 1)
-df = df.withColumn("bin_PCA3", ntile(50).over(window_pca3) - 1)
+    # Step 2: Assign Clusters Based on PCA_2 within PCA_1 Clusters
+    window_pca2 = Window.partitionBy("cluster_pca1").orderBy("PCA_2")
+    df = df.withColumn("cluster_pca2", ntile(50).over(window_pca2))
+    df = df.withColumn("cluster_pca2", col("cluster_pca2").cast(IntegerType()))
 
-# Create cluster identifier
-df = df.withColumn("cluster_id", concat_ws("_", "bin_PCA1", "bin_PCA2", "bin_PCA3"))
+    # Step 3: Assign Clusters Based on PCA_3 within PCA_1 and PCA_2 Clusters
+    window_pca3 = Window.partitionBy("cluster_pca1", "cluster_pca2").orderBy("PCA_3")
+    df = df.withColumn("cluster_pca3", ntile(50).over(window_pca3))
+    df = df.withColumn("cluster_pca3", col("cluster_pca3").cast(IntegerType()))
 
-# Select the relevant columns
-df_final = df.select("smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id")
+    # Step 4: Create Final Cluster ID and Select Relevant Columns
+    df = df.withColumn(
+        "cluster_id",
+        concat_ws(
+            "_",
+            col("cluster_pca1"),
+            col("cluster_pca2"),
+            col("cluster_pca3")
+        )
+    )
 
-# Save the DataFrame as a Parquet file in the shared volume
-df_final.write.mode("overwrite").parquet(output_path)
+    df_result = df.select("smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id")
 
-# Stop the Spark session
-spark.stop()
+     # Save the Results into 10 Parquet Files
+    df_result.coalesce(10).write.mode("overwrite").parquet("path_to_output_directory")
+
+  # Stop Spark Session
+    spark.stop()
+
+if __name__ == "__main__":  
+    main()
