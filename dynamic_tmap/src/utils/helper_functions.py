@@ -9,6 +9,10 @@ def setup_logging():
     )
 
 
+def format_time(seconds):
+      hours, rem = divmod(seconds, 3600)
+      minutes, seconds = divmod(rem, 60)
+      return f"{int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds"
 
 def find_input_type(file_path):
       if file_path.endswith('csv'):
