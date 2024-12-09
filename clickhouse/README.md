@@ -88,3 +88,26 @@ This confirms that the database is accessible from outside the container. You ca
  
 #### Enabling Configuration Tools Inside the Host 
 In the future, this guide will be extended to cover configurations for connecting to the ClickHouse database from a machine other than the host running the container.
+
+
+### Common Errors
+#### Ports are already being used 
+Sometimes due to unexpected errors our container is not closed properly and remains listening to the the 9000 and 8123 ports which prevents new containers (i.e. using `docker compose up -d clickhouse` from listening). To solve this we can use 
+
+```bash
+sudo lsof -i -P -n | grep 9000
+sudo lsof -i -P -n | grep 8123
+```
+
+This will tell us which processes are using (Listening) to these ports. Now that we can kill these processes.
+
+```bash 
+sudo kill <PROCESS_ID>
+```
+
+And finally, start again the container. 
+
+```bash
+docker compose up -d clickhouse
+```
+
