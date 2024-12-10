@@ -1,150 +1,40 @@
-import sys
-import os 
-import logging
-from pyspark.sql import SparkSession
-from pyspark.ml.feature import Bucketizer
-from pyspark.sql.functions import col
-from pyspark.sql.window import Window
-from pyspark.sql.functions import concat_ws
-from pyspark.sql.functions import ntile
-from pyspark.sql.functions import avg, sqrt, pow, col, row_number, broadcast
+import dask.dataframe as dd
+import math
+import os
 
-#TODO: Complete pipeline for constructing the Apache Dataframe
+# Read the parquet files into a Dask DataFrame
+ddf = dd.read_parquet("/mnt/samsung_2tb/mixed_data/output/pca_transformed_results/output/*.parquet")
 
-class ClusterMethod():
-    def __init__(self, bin_size: list, output_path: str):
-        self.spark = SparkSession.builder \
-            .appName("HierarchicalBinning") \
-            .config("spark.driver.memory", "64g") \
-            .config("spark.executor.memory", "64g") \
-            .getOrCreate()
-        self.output_path = output_path 
+# Sort the entire dataset by PCA_1
+# Using set_index with sorted=True ensures that the data is globally sorted by PCA_1
+ddf = ddf.set_index("PCA_1")
 
-        self.bin_size = bin_size
+# Reset the index to get a global integer index from 0 to (total_rows - 1)
+# PCA_1 now becomes a column again, and the new index is a simple RangeIndex across all rows
+ddf = ddf.reset_index(drop=False)
 
-    def _get_count(self):
-        """
-        Get number of samples in the Apache Spark dataframe
-        """
-        pass
+# Define rows per file and calculate the number of files
+rows_per_file = 1_340_000
+total_rows = ddf.shape[0].compute()
+num_files = math.ceil(total_rows / rows_per_file)
 
-    def spark_constructor(self, file_path):
-        """
-        Method to create a Apache Spark database to perform the clustering of large datastets (i.e. that cannot be allocated entirely in memory)
-        param: file_path: the path to the folder where all the parquet files are stored
-        """
-        database= self.spark.read.parquet(f"{file_path}/*")
-        print(database.count())
+# Create the output directory
+output_dir = "/mnt/samsung_2tb/dask_sorted_chunks/"
+os.makedirs(output_dir, exist_ok=True)
 
+# Iterate over the desired number of files, slicing by row index range
+for i in range(num_files):
+    start_idx = i * rows_per_file
+    end_idx = (i + 1) * rows_per_file
 
-    def create_clusters(self, dataframe):
-        """
-        Method to create the clusters from Spark dataframe. The idea is to cluster by sorting the first PCA dimension, then creating n-size bins on that dimension
-        And then on each bin, sort by the second PCA dimension, create n-size bins. And so on for every dimension we have.
-        At the end we will have n**(number of PCA dimensions) equally sized clusters.
-        """
+    # Filter based on the global integer index
+    subset = ddf[(ddf.index >= start_idx) & (ddf.index < end_idx)]
+    
+    # Since we're filtering a Dask DataFrame by row-based conditions, we need to compute before writing
+    subset_df = subset.compute()
 
-        # Define the percentiles for 25 bins
-        percentiles_pca_1= [i / self.bin_size[0] for i in range(1, self.bin_size[0])]
-
-        # Compute approximate quantiles for PCA_1
-        pca1_thresholds = dataframe.approxQuantile("PCA_1", percentiles_pca_1, 0.01)
-
-        # Create splits for Bucketizer
-        pca1_splits = [-float("inf")] + pca1_thresholds + [float("inf")]
-
-        # Initialize Bucketizer
-        bucketizer_pca1 = Bucketizer(
-            splits=pca1_splits,
-            inputCol="PCA_1",
-            outputCol="bin_PCA1_temp"
-        )
-
-        # Transform the DataFrame
-        dataframe = bucketizer_pca1.transform(dataframe)
-
-        # Convert bin_PCA1_temp to IntegerType and adjust to start from 0
-        dataframe = dataframe.withColumn("bin_PCA1", col("bin_PCA1_temp").cast("integer"))
-
-        # Drop the temporary column
-        dataframe = dataframe.drop("bin_PCA1_temp")
-
-        # Create a window specification for PCA_2 within each bin_PCA1
-        window_pca2 = Window.partitionBy("bin_PCA1").orderBy("PCA_2")
-
-        # Assign bins for PCA_2, starting from 0
-        dataframe = dataframe.withColumn("bin_PCA2", ntile(self.bin_size[1]).over(window_pca2) - 1)
-
-        # Create a window specification for PCA_3 within each bin_PCA1 and bin_PCA2
-        window_pca3 = Window.partitionBy("bin_PCA1", "bin_PCA2").orderBy("PCA_3")
-
-        # Assign bins for PCA_3, starting from 0
-        dataframe = dataframe.withColumn("bin_PCA3", ntile(self.bin_size[2]).over(window_pca3) - 1)
-
-        # Combine bin columns to form a cluster identifier
-        dataframe = dataframe.withColumn("cluster_id", concat_ws("_", "bin_PCA1", "bin_PCA2", "bin_PCA3"))
-
-        dataframe = dataframe.select("smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id")
-
-        # return new dataframe
-        return dataframe 
-
-    def save_first_dimension_cluster(self, dataframe):
-        """
-        Save into a csv all the points that belongs to each PCA1 cluster. 
-        e.g. cluster_10.csv will have all compounds with cluster_id == 19_*_*
-        """
-        for i in range(self.bin_size[0]):
-            df_cluster1 = dataframe.filter(col("bin_PCA1") == i)
-            df_cluster1_pd = df_cluster1.toPandas()
-            df_cluster1_pd.to_csv(f"{self.output_path}/cluster_{i}.csv", index=False)
-
-    def get_representatives(self, dataframe):
-        """
-        Method to get compounds that act as representatives of the cluster. 
-        This will constitute the dataframe that is used for the first TMAP
-        The representative is the molecule that is the closest to the average value for every PCA dimension
-        """
-
-        # Step 1: Compute average PCA values for each cluster
-        cluster_centers = dataframe.groupBy("cluster_id").agg(
-            avg("PCA_1").alias("avg_PCA_1"),
-            avg("PCA_2").alias("avg_PCA_2"),
-            avg("PCA_3").alias("avg_PCA_3")
-        ).cache()
-
-        # Step 2: Join the cluster centers back to the original DataFrame
-        df_with_centers = dataframe.join(broadcast(cluster_centers), on="cluster_id")
-
-        # Step 3: Calculate the Euclidean distance to the cluster center
-        df_with_distance = df_with_centers.withColumn(
-            "distance",
-            sqrt(
-                pow(col("PCA_1") - col("avg_PCA_1"), 2) +
-                pow(col("PCA_2") - col("avg_PCA_2"), 2) +
-                pow(col("PCA_3") - col("avg_PCA_3"), 2)
-            )
-        )
-
-        # Step 4: Find the closest molecule in each cluster
-        window_spec = Window.partitionBy("cluster_id").orderBy("distance")
-
-        df_with_rank = df_with_distance.withColumn(
-            "rn",
-            row_number().over(window_spec)
-        )
-
-        closest_molecules = df_with_rank.filter(col("rn") == 1).select(
-            "smiles",
-            "PCA_1",
-            "PCA_2",
-            "PCA_3",
-            "cluster_id"
-        )
-
-        # Step 5: Create the new_cluster_dataframe
-        new_cluster_dataframe = closest_molecules
-
-        cluster_representatives = new_cluster_dataframe.toPandas()
-
-        cluster_representatives.to_csv(f'{self.output_path}/cluster_representatives.csv', index=False)
+    # Write to Parquet file
+    output_filename = os.path.join(output_dir, f"sorted_subset_{i+1:04d}.parquet")
+    subset_df.to_parquet(output_filename)
+    
+    print(f"Saved file {i+1}/{num_files}: {output_filename}")
