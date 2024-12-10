@@ -16,3 +16,5 @@ pyspark/scripts/data.ipynb
 pyspark/.dockerignore
 dynamic_tmap/src/utils/__pycache__/
 dynamic_tmap/logs/
+clickhouse/clikchouse.ipynb
+.gitignore
