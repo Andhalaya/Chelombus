@@ -1,6 +1,7 @@
 import time 
 import random 
 import os 
+from sklearn.neighbors import NearestNeighbors
 from typing import List
 import pandas as pd
 import numpy as np
@@ -14,7 +15,6 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 from faerun import Faerun
 from config import OUTPUT_FILE_PATH, TMAP_NAME, TMAP_NODE_SIZE, TMAP_K, TMAP_POINT_SCALE
 from src.fingerprint_calculator import FingerprintCalculator
-from src.layout_computer import LayoutComputer, Plotter
 import tmap as tm
 import logging
 
@@ -118,16 +118,10 @@ class TmapGenerator:
         self.categ_cols = categ_cols 
         self.dataframe = pd.read_csv(df_path) 
         
-        self.tmap_name = TMAP_NAME
+        self.tmap_name = 'representativeeee'
         # Initialize helper classes
         self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations, fp_size=self.fp_size)
-        self.plotter = Plotter(self.output_name, self.categ_cols)
         self.tmap_constructor = TmapConstructor(self.dataframe)
-
-        #TODO: Is this necessary? I could just create a new instance of the class and treat as just any other TMAP passing 'cluster_id' as label'
-        self.representatives_dataframe_file_path = os.path.join(OUTPUT_FILE_PATH, 'cluster_representatives.csv')
-        self._representatives_dataframe = pd.read_csv(self.representatives_dataframe_file_path)
-        
 
     def _get_fingerprint_vectors(self):
         """
@@ -135,8 +129,85 @@ class TmapGenerator:
         """
         pass
 
-    def tmap_little(self): # Generates TMAP with minimum configuration, for testing purposes
+    def tmap_from_vectors(self): 
+        """
+        Script for generating a simple TMAP using vectors (e.g. PCA coordinates) instead of SMILES
+        """
 
+        pca_columns = ['PCA_1', 'PCA_2', 'PCA_3']
+        pca_values = self.dataframe[pca_columns].values # array shape (125000 , 3)
+        nbrs = NearestNeighbors(n_neighbors=21, metric='euclidean').fit(pca_values)
+    
+        distances, indices = nbrs.kneighbors(pca_values)
+
+        edge_list = []
+        for i in range(len(pca_values)):
+            for neighbor_idx, dist in zip(indices[i, 1:], distances[i, 1:]):
+                edge_list.append((i, neighbor_idx, float(dist)))
+
+        # Get the coordinates and Layout Configuration
+        cfg = tm.LayoutConfiguration()
+        cfg.node_size = TMAP_NODE_SIZE 
+        cfg.mmm_repeats = 2
+        cfg.sl_extra_scaling_steps = 10
+        cfg.k = TMAP_K 
+        cfg.sl_scaling_type = tm.RelativeToAvgLength
+        self.x, self.y, self.s, self.t, _ = tm.layout_from_edge_list(len(pca_values), edge_list, cfg)
+
+        logging.info("Creating labels")
+        start = time.time()
+        labels = []
+        for i, row in self.dataframe.iterrows():
+            if self.categ_cols is not None:
+                label = '__'.join(str(row[col]) for col in self.categ_cols)
+                # Create a clickable link with cluster_id that points to the Flask endpoint
+                link = f'<a href="/generate/{label}" target="_blank">{label}</a>'
+                labels.append(row['smiles'] + '__' + link)
+            else:
+                labels.append(row['smiles'])
+        descriptors = self.tmap_constructor.mol_properties_from_df()
+        end = time.time()
+        logging.info(f"Labels took {end - start} seconds to create")
+
+        # Plotting
+        logging.info("Setting up TMAP and plotting")
+        start = time.time()
+        f = Faerun(
+            view="front",
+            coords=False,
+            title="",
+            clear_color="#FFFFFF",
+        )
+
+        f.add_scatter(
+            self.tmap_name+"_TMAP",
+            {
+                "x": self.x,
+                "y": self.y,
+                "c": descriptors, 
+                "labels":labels,
+            },
+            shader="smoothCircle",
+            point_scale= TMAP_POINT_SCALE,
+            max_point_size= 20,
+            interactive=True,
+            # legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
+            # categorical= bool_categorical, #TODO: Add support for categorical columns. 
+            series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
+            has_legend=True,           
+            colormap=['viridis', 'viridis', 'viridis', 'viridis', 'viridis', 'viridis'],
+            categorical=[False, False, False, False, False, False],
+        )
+
+        f.add_tree(self.tmap_name+"_TMAP_tree", {"from": self.s, "to": self.t}, point_helper=self.tmap_name+"_TMAP")
+        f.plot(self.tmap_name+"_TMAP", template='smiles')
+        end = time.time()
+        logging.info(f"Plotting took {end - start} seconds") 
+
+    def tmap_little(self): 
+        """
+        Script for generating a simple TMAP using fingerprint calculated from SMILES in dataframe
+        """
         start = time.time() 
         logging.info("Calculating fingerprints")
         fingerprints = self.fingerprint_calculator.calculate_fingerprints()
@@ -149,7 +220,6 @@ class TmapGenerator:
         end = time.time()
         logging.info(f"LSH was constructed in {end - start} seconds")
 
-
         logging.info("Creating labels")
         start = time.time()
         labels = []
@@ -159,7 +229,6 @@ class TmapGenerator:
                 # Create a clickable link with cluster_id that points to the Flask endpoint
                 link = f'<a href="/generate/{label}" target="_blank">{label}</a>'
                 labels.append(row['smiles'] + '__' + link)
-
             else:
                 labels.append(row['smiles'])
         descriptors = self.tmap_constructor.mol_properties_from_df()

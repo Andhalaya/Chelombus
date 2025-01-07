@@ -52,8 +52,8 @@ def main() -> None:
     # Set up logging based on the parsed arugments or config defaults
     setup_logging(args.log_level, args.log)
 
-    # logging.info(f"Processing file: {args.data_file}")  
-    # logging.info(f"Output directory: {args.output_dir}")
+    logging.info(f"Processing file: {args.data_file}")  
+    logging.info(f"Output directory: {args.output_dir}")
     logging.info(f"Using K={TMAP_K} (number of neighbors)")
     logging.info(f"Using {args.n_jobs} CPU cores") 
 
@@ -66,8 +66,9 @@ def main() -> None:
         # All configuration should be done passing the arguments either with config.py file or args.parser. 
         # Generate representative cluster. 
 
-        tmap_generator = TmapGenerator(INPUT_TMAP_PATH, fingerprint_type=args.fp,categ_cols=['cluster_id'], output_name=args.tmap_name)
-        tmap_generator.tmap_little()
+        tmap_generator = TmapGenerator(args.data_file, fingerprint_type=args.fp,categ_cols=['cluster_id'], output_name=args.tmap_name)
+        # tmap_generator.tmap_little() # -> This will generate the TMAP from the SMILES
+        tmap_generator.tmap_from_vectors() # -> This method uses a KNN for generating the TMAP from the PCA coordinates
 
     else:
             # Validate secondary TMAP label format
