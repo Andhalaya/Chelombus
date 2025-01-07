@@ -60,7 +60,7 @@ To confirm that ClickHouse is correctly configured to listen on all interfaces:
    netstat -tuln | grep -E '9000|8123'
    ```
 
-   Expected output:
+   The output should be something like this:
    ```plaintext
    tcp        0      0 0.0.0.0:8123            0.0.0.0:*               LISTEN     
    tcp        0      0 0.0.0.0:9000            0.0.0.0:*               LISTEN   
