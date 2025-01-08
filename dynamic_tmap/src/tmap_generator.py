@@ -29,7 +29,7 @@ class TmapConstructor:
         which leads to lose of information due to outliers having extreme color values and the rest falling into the same range. 
         This function calculates a threshold using IQR method to cut the outliers value based on percentiles.
         """
-        q1, q3 = np.percentile(data, [25, 75])
+        q1, q3 = np.percentile(data, [15, 85])
         iqr = q3 - q1 
         threshold = q3 + 1.5*iqr
         return threshold
@@ -69,14 +69,22 @@ class TmapConstructor:
         # changing it for the threshold. 
 
         # Filter the DataFrame based on the thresholds
-        # filtered_df = self.dataframe[
-        #     (self.dataframe['hac'] <= hac_threshold) &
-        #     (self.dataframe['frac_aromatic'] <= frac_threshold) &
-        #     (self.dataframe['num_rings'] <= rings_threshold) &
-        #     (self.dataframe['clogp'] <= clogp_threshold) &
-        #     (self.dataframe['frac_csp3'] <= csp3_threshold)
-        # ]
+        filtered_df = self.dataframe[
+            (self.dataframe['hac'] <= hac_threshold) &
+            (self.dataframe['frac_aromatic'] <= frac_threshold) &
+            (self.dataframe['num_rings'] <= rings_threshold) &
+            (self.dataframe['clogp'] <= clogp_threshold) &
+            (self.dataframe['frac_csp3'] <= csp3_threshold) & 
+            (self.dataframe['MW'] <= mw_threshold)
+        ]
     
+        # filtered_hac = filtered_df['hac'].tolist()
+        # filtered_frac_aromatic = filtered_df['frac_aromatic'].tolist()
+        # filtered_num_rings = filtered_df['num_rings'].tolist()
+        # filtered_clogp = filtered_df['clogp'].tolist()
+        # filtered_frac_csp3 = filtered_df['frac_csp3'].tolist()
+        # filtered_mw = filtered_df['MW'].tolist()
+        
         # Extract filtered properties as lists
         filtered_hac = self.dataframe['hac'].tolist()
         filtered_frac_aromatic = self.dataframe['frac_aromatic'].tolist()
@@ -118,7 +126,7 @@ class TmapGenerator:
         self.categ_cols = categ_cols 
         self.dataframe = pd.read_csv(df_path) 
         
-        self.tmap_name = 'representativeeee'
+        self.tmap_name = 'representatives'
         # Initialize helper classes
         self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations, fp_size=self.fp_size)
         self.tmap_constructor = TmapConstructor(self.dataframe)
@@ -133,7 +141,6 @@ class TmapGenerator:
         """
         Script for generating a simple TMAP using vectors (e.g. PCA coordinates) instead of SMILES
         """
-
         pca_columns = ['PCA_1', 'PCA_2', 'PCA_3']
         pca_values = self.dataframe[pca_columns].values # array shape (125000 , 3)
         nbrs = NearestNeighbors(n_neighbors=21, metric='euclidean').fit(pca_values)
@@ -166,6 +173,7 @@ class TmapGenerator:
             else:
                 labels.append(row['smiles'])
         descriptors = self.tmap_constructor.mol_properties_from_df()
+        print(len(descriptors[2, :]))
         end = time.time()
         logging.info(f"Labels took {end - start} seconds to create")
 
@@ -178,9 +186,42 @@ class TmapGenerator:
             title="",
             clear_color="#FFFFFF",
         )
+        legend_labels = [
+        (0, "0"),
+        (1, "1"),
+        (2, "2"),
+        (3, "3"),
+        (4, "4"),
+        (5, "5"),
+        (6, "6"),
+        (7, "7"),
+        (8, "8"),
+        (9, "9"),
+    ]
 
         f.add_scatter(
             self.tmap_name+"_TMAP",
+            {
+                "x": self.x,
+                "y": self.y,
+                "c": descriptors[2], 
+                "labels":labels,
+            },
+            shader="smoothCircle",
+            point_scale= TMAP_POINT_SCALE,
+            max_point_size= 20,
+            interactive=True,
+            # legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
+            # categorical= bool_categorical, #TODO: Add support for categorical columns. 
+            series_title=['Number of Rings'], 
+            has_legend=True,           
+            legend_labels= legend_labels,
+            colormap='tab10', 
+            categorical=False, 
+        )
+
+        f.add_scatter(
+            self.tmap_name+"_TMAP_2",
             {
                 "x": self.x,
                 "y": self.y,
@@ -195,7 +236,9 @@ class TmapGenerator:
             # categorical= bool_categorical, #TODO: Add support for categorical columns. 
             series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
             has_legend=True,           
-            colormap=['viridis', 'viridis', 'viridis', 'viridis', 'viridis', 'viridis'],
+            legend_labels=legend_labels,
+            colormap=['tab10', 'tab10', 'tab10', 'tab10', 'tab10', 'viridis'],
+        
             categorical=[False, False, False, False, False, False],
         )
 
@@ -261,8 +304,8 @@ class TmapGenerator:
             # categorical= bool_categorical, #TODO: Add support for categorical columns. 
             series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
             has_legend=True,           
-            colormap=['viridis', 'viridis', 'viridis', 'viridis', 'viridis', 'viridis'],
-            categorical=[False, False, False, False, False, False],
+            colormap=['viridis', 'viridis', ring_colors, 'viridis', 'viridis', 'viridis'],
+            categorical=[False, False, True, False, False, False],
         )
 
         f.add_tree(self.tmap_name+"_TMAP_tree", {"from": self.s, "to": self.t}, point_helper=self.tmap_name+"_TMAP")
