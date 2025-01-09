@@ -22,13 +22,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import configurations and modules
 from config import (INPUT_TMAP_PATH, OUTPUT_TMAP_PATH, CLUSTER_DATA_PATH, BASE_DIR,
                     LOGGING_LEVEL, LOGGING_FORMAT, LOG_FILE_PATH, N_JOBS, TMAP_K, TMAP_NAME)
-from src.tmap_generator import TmapGenerator
+from src.tmap_generator import TmapGenerator, ClickhouseTMAP
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process fingerprints with flexible options.")
     
     # Optional arguments to override config settings
-    parser.add_argument('--l', type=str, help="Choose whether you want to see the primary TMAP (cluster representatives) or a secondary TMAP (indicated by cluster_id = int_int_int")
+    parser.add_argument('--l', type=str, help="'primary' to create a primary TMAP (cluster representatives) or a secondary TMAP (indicated by cluster_id = int_int_int")
     parser.add_argument('--data-file', type=str, default=INPUT_TMAP_PATH, help="Input data file path.")
     parser.add_argument('--log', type=bool, default=False, help="Saving logs to output.log file. Default False")
     parser.add_argument('--log-level', type=str, default=LOGGING_LEVEL,
@@ -71,20 +71,8 @@ def main() -> None:
         tmap_generator.tmap_from_vectors() # -> This method uses a KNN for generating the TMAP from the PCA coordinates
 
     else:
-            # Validate secondary TMAP label format
-            if re.match(r"^\d+_\d+_\d+$", args.l):
-                # Secondary TMAP processing logic        
-                bin = args.l.split('_')[0]
-                cluster_path = os.path.join(CLUSTER_DATA_PATH, f'cluster{bin}.csv')
-
-                tmap_generator = TmapGenerator(cluster_path, fingerprint_type=args.fp)
-                tmap_generator.generate_cluster_tmap(args.l)
-            else:
-                logging.error("Invalid cluster_id format. Expected format: 'int_int_int' (e.g., 1_10_23 or 10_11_1)")
-                raise ValueError(f"Invalid cluster_id format. Please provide a cluster_id in the format 'int_int_int'. Instead got: {args.l}")
-
-
-
+        clickhouse_tmap = ClickhouseTMAP() 
+        clickhouse_tmap.generate_tmap_from_cluster_id(args.l)
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
@@ -94,24 +82,24 @@ if __name__ == "__main__":
     main()
     logging.info("TMAP successfully generated")
 
-    # Define paths
-    source_pattern = os.path.join('/home/afloresep/work/chelombus/backend', '*.html')
-    destination_dir = os.path.join('/home/afloresep/work/chelombus/backend', 'static')
-    os.makedirs(destination_dir, exist_ok=True)
+    # # Define paths
+    # source_pattern = os.path.join('/home/afloresep/work/chelombus/backend', '*.html')
+    # destination_dir = os.path.join('/home/afloresep/work/chelombus/backend', 'static')
+    # os.makedirs(destination_dir, exist_ok=True)
 
-    logging.info(f"Source pattern for HTML files: {source_pattern}")
-    logging.info(f"Destination directory: {destination_dir}")
+    # logging.info(f"Source pattern for HTML files: {source_pattern}")
+    # logging.info(f"Destination directory: {destination_dir}")
 
-    # Move HTML files
-    for file_path in glob.glob(source_pattern):
-        logging.info(f"Moving HTML file: {file_path} to {destination_dir}")
-        shutil.move(file_path, destination_dir)
+    # # Move HTML files
+    # for file_path in glob.glob(source_pattern):
+    #     logging.info(f"Moving HTML file: {file_path} to {destination_dir}")
+    #     shutil.move(file_path, destination_dir)
 
-    # Move JavaScript files
-    source_pattern_js = os.path.join('/home/afloresep/work/chelombus/backend', '*.js')
-    for file_path in glob.glob(source_pattern_js):
-        logging.info(f"Moving JS file: {file_path} to {destination_dir}")
-        shutil.move(file_path, destination_dir)
+    # # Move JavaScript files
+    # source_pattern_js = os.path.join('/home/afloresep/work/chelombus/backend', '*.js')
+    # for file_path in glob.glob(source_pattern_js):
+    #     logging.info(f"Moving JS file: {file_path} to {destination_dir}")
+    #     shutil.move(file_path, destination_dir)
 
     end_time = time.time()
     logging.info("All files moved successfully")

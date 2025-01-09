@@ -101,7 +101,7 @@ class TmapGenerator:
     def __init__(
             self,
             df_path: pd.DataFrame,  
-            fingerprint_type: str = 'morgan', 
+            fingerprint_type: str = 'mhfp', 
             permutations: Optional[int]= 512, 
             output_name: str = TMAP_NAME,
             fp_size: int = 1024, 
@@ -131,11 +131,6 @@ class TmapGenerator:
         self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations, fp_size=self.fp_size)
         self.tmap_constructor = TmapConstructor(self.dataframe)
 
-    def _get_fingerprint_vectors(self):
-        """
-        The vectors used for the TMAP layout will be the fingerprints calcualted from the SMILES
-        """
-        pass
 
     def tmap_from_vectors(self): 
         """
@@ -271,7 +266,7 @@ class TmapGenerator:
             # categorical= bool_categorical, #TODO: Add support for categorical columns. 
             series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
             has_legend=True,           
-            colormap=['viridis', 'viridis', ring_colors, 'viridis', 'viridis', 'viridis'],
+            colormap=['viridis', 'viridis', 'viridis', 'viridis', 'viridis', 'viridis'],
             categorical=[False, False, True, False, False, False],
         )
 
@@ -299,11 +294,13 @@ class TmapGenerator:
             self._get_pca_vectors()
         self.label = 'cluster_id'
 
-    def construct_lsh_forest(self, fingerprints) -> None:
+    @staticmethod
+    def construct_lsh_forest(fingerprints) -> None:
+        import tmap as tm
         tm_fingerprints  = [tm.VectorUint(fp) for fp in fingerprints] #TMAP requires fingerprints to be passed as VectorUint
 
         # LSH Indexing and coordinates generation
-        lf = tm.LSHForest(self.permutations)
+        lf = tm.LSHForest(512)
         lf.batch_add(tm_fingerprints)
         lf.index()
 
@@ -315,9 +312,10 @@ class TmapGenerator:
         cfg.k = TMAP_K 
         cfg.sl_scaling_type = tm.RelativeToAvgLength
         start = time.time()
-        self.x, self.y, self.s, self.t, _ = tm.layout_from_lsh_forest(lf, cfg)
+        x, y, s, t, _ = tm.layout_from_lsh_forest(lf, cfg)
         end = time.time()
         logging.info(f'Layout from lsh forest took {(end-start)} seconds')
+        return x, y, s, t 
 
     def plot_faerun(self, fingerprints):
         logging.info("Constructing LSH Forest...")
@@ -383,13 +381,140 @@ class TmapGenerator:
         cluster_id (str int_int_int) Find the cluster_id which TMAP we will do. It has to be in format PCA1_PCA2_PCA3. 
         e.g. 0_12_10. Right now it finds the csv file with this label. In the future it will retrieve it from the database
         """
+
+        import clickhouse_connect
+        import pandas as pd 
+
+        client = clickhouse_connect.get_client(host='localhost', port=8123)
+
         logging.info(f'Getting data for cluster_id = {cluster_id}')
-        self.dataframe = self.dataframe[self.dataframe['cluster_id'] == cluster_id]
-        name = f'cluster{cluster_id}'
+        # Define query 
+        self.dataframe = pd.DataFrame(client.query(f"SELECT * FROM clustered_enamine WHERE cluster_id == {cluster_id}").result_rows,
+                                 columns=["smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id"])
+
+        name = f'cluster_{cluster_id}'
         self.tmap_name = name
+
         logging.info(f'TMAP of {len(self.dataframe)}')
         # Re-Initialize Fingerprint Calculator
         self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations, fp_size=self.fp_size)
         self.tmap_constructor = TmapConstructor(self.dataframe)
         self.tmap_little()
+        logging.info('TMAP DONE')
+
+
+class ClickhouseTMAP():
+    def __init__(
+            self,
+            fingerprint_type: str = 'mhfp', 
+            permutations: Optional[int]= 512, 
+            output_name: str = TMAP_NAME,
+            fp_size: int = 1024, 
+            categ_cols: Optional[List] = None
+        ):
+        """
+        param: fingerprint_type : Which molecular fingerprint to be used on the TMAP. Options: {'mhfp', 'mqn', 'morgan', 'mapc'
+        param: permutations: On MHFP number of permutations to be used in the MinHash
+        param: output_name: name for the TMAP files. In case of the dynamic TMAP should inherit name from the cluster_id 
+        param: categ_cols: List with the column names in the dataframe to be included as labels in the TMAP. These are typically your categorical columns
+        e.g. 'Target_type', 'Organism' ...  
+        """
+        self.fingerprint_type = fingerprint_type
+        self.permutations = permutations
+        self.output_name = output_name
+        self.fp_size = fp_size
+        self.categ_cols = categ_cols 
+        
+        self.tmap_name = 'representatives'
+        # Initialize helper classes
+
+    def generate_tmap_from_cluster_id(self, cluster_id): 
+
+        import clickhouse_connect
+        import pandas as pd
+
+        ##########################################
+        # Connect to clickchouse database
+        ##########################################
+        client = clickhouse_connect.get_client(host='localhost', port=8123)
+
+        logging.info(f'Getting data for cluster_id = {cluster_id}')
+
+        # Create dataframe from DB and name for the TMAP
+        self.dataframe = pd.DataFrame(client.query(f"SELECT * FROM clustered_enamine WHERE cluster_id == {cluster_id}").result_rows,
+                                 columns=["smiles", "PCA_1", "PCA_2", "PCA_3", "cluster_id"])
+        name = f'cluster_{cluster_id}'
+        self.tmap_name = name
+
+        logging.info(f'TMAP of {len(self.dataframe)} points')
+
+        # Initialize Fingerprint Calculator
+        self.fingerprint_calculator = FingerprintCalculator(self.dataframe['smiles'], self.fingerprint_type, permutations=self.permutations, fp_size=self.fp_size)
+        tmap_constructor = TmapConstructor(self.dataframe)
+
+        ################################
+        # Create TMAP from DB dataframe
+        ################################
+
+        start = time.time() 
+        logging.info("Calculating fingerprints")
+        fingerprints = self.fingerprint_calculator.calculate_fingerprints()
+        end = time.time()
+        logging.info(f"Fingeprints calculations took {end - start} seconds")
+
+        logging.info("Constructing LSH Forest")
+        start = time.time()
+        x, y, s, t = TmapGenerator.construct_lsh_forest(fingerprints)
+        end = time.time()
+        logging.info(f"LSH was constructed in {end - start} seconds")
+
+        logging.info("Creating labels")
+        start = time.time()
+        labels = []
+        for i, row in self.dataframe.iterrows():
+            if self.categ_cols is not None:
+                label = '__'.join(str(row[col]) for col in self.categ_cols)
+                # Create a clickable link with cluster_id that points to the Flask endpoint
+                link = f'<a href="/generate/{label}" target="_blank">{label}</a>'
+                labels.append(row['smiles'] + '__' + link)
+            else:
+                labels.append(row['smiles'])
+        descriptors = tmap_constructor.mol_properties_from_df()
+        end = time.time()
+        logging.info(f"Labels took {end - start} seconds to create")
+
+        # Plotting
+        logging.info("Setting up TMAP and plotting")
+        start = time.time()
+        f = Faerun(
+            view="front",
+            coords=False,
+            title="",
+            clear_color="#FFFFFF",
+        )
+
+        f.add_scatter(
+            "Descriptors",
+            {
+                "x": x,
+                "y": y,
+                "c": descriptors, 
+                "labels":labels,
+            },
+            shader="smoothCircle",
+            point_scale= TMAP_POINT_SCALE,
+            max_point_size= 20,
+            interactive=True,
+            # legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
+            # categorical= bool_categorical, #TODO: Add support for categorical columns. 
+            series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
+            has_legend=True,           
+            colormap=['hsv', 'hsv', 'hsv', 'hsv', 'hsv', 'hsv'],
+        
+            categorical=[False, False, False, False, False, False],
+        )
+        f.add_tree(self.tmap_name+"_TMAP_tree", {"from": s, "to": t}, point_helper="Descriptors")
+        f.plot(self.tmap_name+"_TMAP", template='smiles')
+        
+        logging.info(f"Plotting took {end - start} seconds") 
         logging.info('TMAP DONE')
