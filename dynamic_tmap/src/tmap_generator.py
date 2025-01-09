@@ -140,6 +140,7 @@ class TmapGenerator:
     def tmap_from_vectors(self): 
         """
         Script for generating a simple TMAP using vectors (e.g. PCA coordinates) instead of SMILES
+        Mainly to be used to create the primary TMAP. 
         """
         pca_columns = ['PCA_1', 'PCA_2', 'PCA_3']
         pca_values = self.dataframe[pca_columns].values # array shape (125000 , 3)
@@ -186,42 +187,9 @@ class TmapGenerator:
             title="",
             clear_color="#FFFFFF",
         )
-        legend_labels = [
-        (0, "0"),
-        (1, "1"),
-        (2, "2"),
-        (3, "3"),
-        (4, "4"),
-        (5, "5"),
-        (6, "6"),
-        (7, "7"),
-        (8, "8"),
-        (9, "9"),
-    ]
 
         f.add_scatter(
-            self.tmap_name+"_TMAP",
-            {
-                "x": self.x,
-                "y": self.y,
-                "c": descriptors[2], 
-                "labels":labels,
-            },
-            shader="smoothCircle",
-            point_scale= TMAP_POINT_SCALE,
-            max_point_size= 20,
-            interactive=True,
-            # legend_labels=[], # TODO: Get list of list of labels. This sould be something like [df[col] for col in self.categ_col]
-            # categorical= bool_categorical, #TODO: Add support for categorical columns. 
-            series_title=['Number of Rings'], 
-            has_legend=True,           
-            legend_labels= legend_labels,
-            colormap='tab10', 
-            categorical=False, 
-        )
-
-        f.add_scatter(
-            self.tmap_name+"_TMAP_2",
+            "Descriptors",
             {
                 "x": self.x,
                 "y": self.y,
@@ -236,13 +204,12 @@ class TmapGenerator:
             # categorical= bool_categorical, #TODO: Add support for categorical columns. 
             series_title= ['HAC', 'Fraction Aromatic Atoms', 'Number of Rings', 'clogP', 'Fraction Csp3', 'MW'], 
             has_legend=True,           
-            legend_labels=legend_labels,
-            colormap=['tab10', 'tab10', 'tab10', 'tab10', 'tab10', 'viridis'],
+            colormap=['hsv', 'hsv', 'hsv', 'hsv', 'gist_ncar', 'gist_rainbow'],
         
             categorical=[False, False, False, False, False, False],
         )
 
-        f.add_tree(self.tmap_name+"_TMAP_tree", {"from": self.s, "to": self.t}, point_helper=self.tmap_name+"_TMAP")
+        f.add_tree(self.tmap_name+"_TMAP_tree", {"from": self.s, "to": self.t}, point_helper="Descriptors")
         f.plot(self.tmap_name+"_TMAP", template='smiles')
         end = time.time()
         logging.info(f"Plotting took {end - start} seconds") 
