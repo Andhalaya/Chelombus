@@ -428,7 +428,7 @@ class ClickhouseTMAP():
         self.tmap_name = 'representatives'
         # Initialize helper classes
 
-    def generate_tmap_from_cluster_id(self, cluster_id): 
+    def generate_tmap_from_cluster_id(self, cluster_id, client): 
 
         import clickhouse_connect
         import pandas as pd
@@ -436,7 +436,7 @@ class ClickhouseTMAP():
         ##########################################
         # Connect to clickchouse database
         ##########################################
-        client = clickhouse_connect.get_client(host='localhost', port=8123)
+        # client = clickhouse_connect.get_client(host='localhost', port=8123)
 
         logging.info(f'Getting data for cluster_id = {cluster_id}')
 
@@ -518,3 +518,7 @@ class ClickhouseTMAP():
         
         logging.info(f"Plotting took {end - start} seconds") 
         logging.info('TMAP DONE')
+        
+        import gc 
+        del self.dataframe, descriptors, x, y, labels, s, t 
+        gc.collect()
