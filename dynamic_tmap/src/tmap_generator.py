@@ -436,7 +436,6 @@ class ClickhouseTMAP():
         ##########################################
         # Connect to clickchouse database
         ##########################################
-        # client = clickhouse_connect.get_client(host='localhost', port=8123)
 
         logging.info(f'Getting data for cluster_id = {cluster_id}')
 
