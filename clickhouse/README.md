@@ -111,3 +111,37 @@ And finally, start again the container.
 docker compose up -d clickhouse
 ```
 
+
+### Connecting from Remote 
+
+To connect to the database from a different machine where its hosted (e.g. a cluster), ensure:
+
+1. Edit config.xml in the Docker container:
+```bash
+docker exec -it clickhouse-server bash
+nano /etc/clickhouse-server/config.xml
+```
+
+2. Ensure <listen_host> includes 0.0.0.0 for IPv4:
+
+```xml
+<listen_host>0.0.0.0</listen_host>
+```
+
+To **try the connection from the remote machine**
+
+
+```bash
+telnet 130.92.XXX.XXX 8123
+telnet 130.92.XXX.XXX 9000
+```
+Change `130.92.XXX.XXX`with the IP Address of the host machine, which can be seen with `ip addr`
+
+3. Allow Ports 8123 and 9000 in the Host Firewall
+
+(On Linux)
+``` bash
+sudo ufw allow 8123
+sudo ufw allow 9000
+sudo ufw reload
+```
