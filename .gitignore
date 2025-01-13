@@ -18,3 +18,7 @@ dynamic_tmap/src/utils/__pycache__/
 dynamic_tmap/logs/
 clickhouse/clikchouse.ipynb
 .gitignore
+dynamic_tmap/representativeeee_TMAP.html
+dynamic_tmap/representativeeee_TMAP.js
+dynamic_tmap/maps/cluster_69681_TMAP.js
+maps/
