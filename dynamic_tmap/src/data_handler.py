@@ -2,15 +2,9 @@ import gc
 import logging
 import os 
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.decomposition import IncrementalPCA
 from src.utils.helper_functions import find_input_type
-from memory_profiler import profile
-import numpy as np
-import time
-import tqdm
 from src.fingerprint_calculator import FingerprintCalculator
 
 def get_total_chunks(file_path, chunksize):
@@ -20,15 +14,18 @@ def get_total_chunks(file_path, chunksize):
     """
     print('Preparing tqdm...')
     total_lines = sum(1 for _ in open(file_path)) - 1  # Subtract 1 for header
-    # total_lines = int(664075400) # Lines for the Enamine_REAL file ~664M compounds
     total_chunks = (int(total_lines) + int(chunksize) - 1) // int(chunksize)
     return total_chunks
     
 class DataHandler:
-    def __init__(self, file_path, chunksize):
+    def __init__(self, 
+                 file_path: str, 
+                 chunksize: str, 
+                 smiles_col_index: int = 0):
         self.file_path = file_path
         self.chunksize = chunksize
         self.datatype = find_input_type(file_path)
+        self.smiles_col_index = smiles_col_index
 
     def get_total_lines(self):
         """Calculate the total number of lines in the file."""
@@ -42,8 +39,8 @@ class DataHandler:
         if self.datatype == 'csv':
             return self._load_csv_data(), total_chunks
         
-        elif self.datatype == 'cxsmiles' :
-            return self._load_cxsmiles_data(), total_chunks
+        elif self.datatype == 'cxsmiles' or self.datatype == 'txt' :
+            return self._load_tabular_data(), total_chunks
         else:
             raise ValueError(f"Unsupported file type: {self.datatype}")
 
@@ -54,17 +51,8 @@ class DataHandler:
         except Exception as e:
             raise ValueError(f"Error reading file: {e}")
         
-    def _load_txt_data(self):
-        #TODO return data from txt file
-        #it should work with load cxsmiles function
-        try:
-            pass
-        except Exception as e:
-            raise ValueError(f"Error reading file: {e}")
-            
-
-    def _load_cxsmiles_data(self):
-        smiles_col_index = 1  # Index for the 'smiles' column (0-based)
+    def _load_tabular_data(self):
+        smiles_col_index = self.smiles_col_index  # Index for the 'smiles' column (0-based)
         try:
             for chunk in pd.read_csv(
                 self.file_path,
@@ -82,44 +70,6 @@ class DataHandler:
         except Exception as e:
             raise ValueError(f"Error loading data: {e}")
 
-
-
-        
-    
-    def extract_smiles_and_features(self, data):
-            """ 
-            Method for extracting smiles and features in pandas. `data` object needs to be pd.DataFrame. 
-            Not optimal for very large datasets? So far I've tried with 10M samples and performed well
-            input: 
-            param: data. pd.Dataframe, .txt or .cxsmiles file 
-            output:
-            smiles = np.array(batch_size,)
-            features = np.array(batch_size, features) 
-            """
-            return data
-            # try: 
-            #     data.columns = data.columns.str.lower() # for csv file
-            #     try: 
-            #         smiles_column = data.filter(like='smiles').columns[0]  # Gets the first matching column name
-            #     except: 
-            #         raise ValueError(f"No SMILES column found in {self.file_path}. Ensure there's a column named 'smiles'.")
-                
-            #     smiles_list = data[smiles_column]
-            #     features_list = data.drop(columns=[smiles_column])
-            
-            # except: 
-            #     # for .txt or cxsmiles files
-            #     """
-            #      This part assumes that the 'smiles' columns in the txt or cxsmile files is in first position
-            #     """
-            #     smiles_list = np.array(data)[:,0] # Return list of all first elements in the list of lists (data) -> list of smiles
-            #     features_list = np.array(data)[:,1:]
-
-            #     # return smiles_list, features_list
- 
-            
-            # return np.array(smiles_list), np.array(features_list)
-    
     def one_hot_encode(self, features): 
         """ 
         #TODO Idea is to one hot encode categorical features e.g. 'target value'
@@ -136,10 +86,17 @@ class DataHandler:
         return oh_features
     
     # @profile
-    def process_chunk(self, idx, chunk, output_dir):
+    def process_chunk(self, 
+                      idx, 
+                      chunk, 
+                      output_dir, 
+                      fingerprint: str):
         """
         Process a single chunk of data by calculating fingerprints and saving them to a parquet file
         """
+        # TODO: Remove idx and checking if chunk already exists. The reason is there's conflict when dealing with loading from differnt 
+        # files. After done with file 1 it will name again chunk_0 from file 2 but will be skipped because chunk_0 from file_1 already exists
+
         try:
             # Check if chunk already exists
             fp_chunk_path = os.path.join(output_dir, f'batch_parquet/fingerprints_chunk_{idx}.parquet')
@@ -148,9 +105,9 @@ class DataHandler:
                 return            
 
             # Extract smiles and features from chunk
-            smiles_list = self.extract_smiles_and_features(chunk)
+            smiles_list = chunk 
 
-            fp_calculator = FingerprintCalculator(smiles_list, 'mqn')
+            fp_calculator = FingerprintCalculator(smiles_list, fingerprint_type=fingerprint)
 
             # Calculate fingerprints
             fingerprints = fp_calculator.calculate_fingerprints()
@@ -158,16 +115,6 @@ class DataHandler:
             # Ensure output directories exist
             os.makedirs(os.path.join(output_dir, 'batch_parquet'), exist_ok=True)
             os.makedirs(os.path.join(output_dir, 'output'), exist_ok=True)
-
-    #       #TODO: Add option to use .h5 files? .h5 files are too slow though...
-    #       # Save fingerprints in HDF5 format
-    #       with h5py.File(fp_chunk_path, 'w') as h5f:
-    #           h5f.create_dataset('fingerprints', data=fingerprints)
-
-    #        # Save smiles and features in HDF5 format
-    #       with h5py.File(os.path.join(output_dir, f'features_chunks/smiles_features_chunk_{idx}.h5'), 'w') as h5f:
-    #           h5f.create_dataset('smiles_list', data=np.array(smiles_list, dtype='S'))  # Store strings as bytes
-    #           # h5f.create_dataset('features', data= np.array(features, dtype='S')) 
 
             # Create dataframe with smiles list
             smiles_dataframe= pd.DataFrame({
@@ -183,6 +130,7 @@ class DataHandler:
             chunk_dataframe = pd.concat([smiles_dataframe, fingerprint_df], axis=1)
             del smiles_dataframe, fingerprint_df 
 
+            #TODO: Return dataframe instead of saving? Probably the best option
             # Save to parquet dataframe
             chunk_dataframe.to_parquet(fp_chunk_path, index=False)
 
