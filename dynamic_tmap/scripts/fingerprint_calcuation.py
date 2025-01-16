@@ -79,3 +79,7 @@ def main() -> None:
 
     end = time.time()    
     logging.info(f"Preprocessing of data took: {(end - start)/59:.2f} minutes")
+
+
+if __name__ == "__main__":
+    main()
