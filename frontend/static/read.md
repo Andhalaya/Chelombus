@@ -10,8 +10,10 @@ Update your HTML files to link to these assets:
 <!-- In your HTML files -->
 <link rel="stylesheet" href="/static/styles.css">
 <script src="/static/script.js"></script>
-In your frontend/Dockerfile, copy the static/ directory:
-dockerfile
-Copy code
+````
+
+In your frontend/Dockerfile, copy the `static/` directory:
+
+```dockerfile
 COPY static/ /usr/share/nginx/html/static/
 ```
