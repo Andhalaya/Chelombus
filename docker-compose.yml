@@ -5,15 +5,13 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./shared_volume:/usr/share/nginx/html/generated_tmaps
-    depends_on:
-      - dynamic-tmap 
+      # folder with the generated tmaps
+      - /mnt/10tb_hdd/clustered_enamine_database/tmaps:/usr/share/nginx/html/generated_tmaps
     networks:
       - chelombus-network
 
   clickhouse:
     image: clickhouse:latest
-    user: 1000:1000
     environment:
       - HOME=/var/lib/clickhouse
     ports:
