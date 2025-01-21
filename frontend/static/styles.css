@@ -62,38 +62,43 @@ footer{
     width: 100%;
 }
 
-.container{
+.container {
     display: flex;
     justify-content: center;
-    gap: 50px;
+    align-items: center; /* Ensures all boxes align vertically */
+    gap: 50px; /* Adjusts spacing between the boxes */
+    flex-wrap: wrap; /* Adds wrapping if needed for responsiveness */
 }
 
-.box{
-    width:250px;
+.box {
+    width: 250px;
     height: 280px;
     background-color: rgba(253, 253, 253, 0.9);
     box-shadow: rgb(43, 43, 43) 3px 3px 10px;
     border-radius: 30px;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
+    text-align: center; /* Centers text inside the box */
     gap: 20px;
     transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
-.box img{
+.box img {
     width: 120px;
-    height:auto;
+    height: auto; /* Keeps aspect ratio */
+    max-height: 100px; /* Adjust max height if needed */
     object-fit: contain;
 }
 
-.box .description{
+.box .description {
     font-size: 18px;
     color: rgba(32, 34, 57, 0.9);
     text-align: center;
-
+    margin: 0; /* Removes default margin */
 }
+
 .box:hover{
     background-color: white;
     cursor: pointer;
